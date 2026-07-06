@@ -365,7 +365,9 @@ export default function ImportPage() {
           Step 1 — Select Import File
         </CardTitle>
         <CardDescription>
-          Upload the completed ME Components RH Records Excel template (.xlsx). Download the template below if you haven't filled it in yet.
+          Upload the completed ME Components RH Records Excel template (.xlsx). Haven't got one yet? Download the
+          sample template below — it's pre-filled with example vessel, piston, fuel valve, and exhaust valve data
+          (including parent/child nozzles, springs, seats, and spindles) to copy the format from.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -411,7 +413,7 @@ export default function ImportPage() {
           className="flex items-center gap-1.5 text-sm text-primary hover:underline"
         >
           <Download className="h-4 w-4" />
-          Download template
+          Download sample template
         </a>
         <Button onClick={handlePreview} disabled={!file || parsing}>
           {parsing
