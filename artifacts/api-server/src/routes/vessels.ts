@@ -132,7 +132,7 @@ router.post("/vessels/demo", requireRole("technical_office"), async (_req, res):
 });
 
 // ─── Create vessel ─────────────────────────────────────────────────────────
-router.post("/vessels", requireRole("technical_office"), async (req, res): Promise<void> => {
+router.post("/vessels", async (req, res): Promise<void> => {
   const parsed = CreateVesselBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -157,6 +157,12 @@ router.post("/vessels", requireRole("technical_office"), async (req, res): Promi
   // Create cylinders for the new vessel
   for (let i = 1; i <= vessel.numCylinders; i++) {
     await db.insert(cylinderSetup).values({ vesselId: vessel.id, cylinderNumber: i });
+  }
+
+  // A vessel_officer creating a vessel automatically gets access to it;
+  // technical_office already has implicit fleet-wide access.
+  if (req.user!.role === "vessel_officer") {
+    await db.insert(userVesselAccess).values({ userId: req.user!.userId, vesselId: vessel.id });
   }
 
   res.status(201).json(toVesselDto(vessel));

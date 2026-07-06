@@ -15,6 +15,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/contexts/AuthContext";
 
 const formSchema = z.object({
   vesselName: z.string().min(2, "Vessel name must be at least 2 characters"),
@@ -28,6 +29,8 @@ export default function SetupPage() {
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const canLoadDemo = user?.role === "technical_office";
   
   const createVessel = useCreateVessel();
   const loadDemo = useLoadDemoVessel();
@@ -131,32 +134,38 @@ export default function SetupPage() {
           <CardHeader>
             <CardTitle>Setup First Vessel</CardTitle>
             <CardDescription>
-              Create an empty vessel profile, or start with demo data to see how it works.
+              {canLoadDemo
+                ? "Create an empty vessel profile, or start with demo data to see how it works."
+                : "Create your vessel's profile to get started."}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <Button 
-              variant="outline" 
-              className="w-full h-16 border-dashed border-2 hover:border-primary/50 hover:bg-primary/5 transition-colors"
-              onClick={handleLoadDemo}
-              disabled={isDemoLoading || createVessel.isPending}
-            >
-              {isDemoLoading ? (
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              ) : (
-                <Play className="mr-2 h-5 w-5 text-primary" />
-              )}
-              <div className="text-left">
-                <div className="font-semibold text-foreground">Load Demo Vessel</div>
-                <div className="text-xs text-muted-foreground font-normal">Pre-filled with MT. Bochem Marengo data</div>
-              </div>
-            </Button>
+            {canLoadDemo && (
+              <>
+                <Button
+                  variant="outline"
+                  className="w-full h-16 border-dashed border-2 hover:border-primary/50 hover:bg-primary/5 transition-colors"
+                  onClick={handleLoadDemo}
+                  disabled={isDemoLoading || createVessel.isPending}
+                >
+                  {isDemoLoading ? (
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  ) : (
+                    <Play className="mr-2 h-5 w-5 text-primary" />
+                  )}
+                  <div className="text-left">
+                    <div className="font-semibold text-foreground">Load Demo Vessel</div>
+                    <div className="text-xs text-muted-foreground font-normal">Pre-filled with MT. Bochem Marengo data</div>
+                  </div>
+                </Button>
 
-            <div className="flex items-center gap-4">
-              <Separator className="flex-1" />
-              <span className="text-xs text-muted-foreground uppercase font-semibold">Or create new</span>
-              <Separator className="flex-1" />
-            </div>
+                <div className="flex items-center gap-4">
+                  <Separator className="flex-1" />
+                  <span className="text-xs text-muted-foreground uppercase font-semibold">Or create new</span>
+                  <Separator className="flex-1" />
+                </div>
+              </>
+            )}
 
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

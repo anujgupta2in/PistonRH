@@ -3,7 +3,6 @@ import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { AuthContext, useAuth } from "@/contexts/AuthContext";
 import { VesselContext, useVesselContext } from "@/contexts/VesselContext";
 import {
@@ -15,7 +14,7 @@ import {
 } from "@workspace/api-client-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { Loader2, ShieldAlert } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import LoginPage from "@/pages/login";
 import SetupPage from "@/pages/setup";
@@ -92,26 +91,7 @@ function VesselProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-function NoVesselAccess() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
-      <Card className="max-w-md w-full">
-        <CardHeader className="items-center text-center">
-          <ShieldAlert className="h-10 w-10 text-muted-foreground mb-2" />
-          <CardTitle>No Vessel Access</CardTitle>
-          <CardDescription>
-            You don't have access to any vessel yet. Contact your Technical Office administrator to be
-            granted access.
-          </CardDescription>
-        </CardHeader>
-        <CardContent />
-      </Card>
-    </div>
-  );
-}
-
 function AppContent() {
-  const { user } = useAuth();
   const { activeVesselId, isLoading } = useVesselContext();
 
   if (isLoading) {
@@ -123,7 +103,7 @@ function AppContent() {
   }
 
   if (!activeVesselId) {
-    return user?.role === "technical_office" ? <SetupPage /> : <NoVesselAccess />;
+    return <SetupPage />;
   }
 
   return (

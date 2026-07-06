@@ -35,13 +35,20 @@ import {
 } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2, Ship, UserCog } from "lucide-react";
+import { Loader2, Plus, Trash2, Ship, UserCog, Pencil } from "lucide-react";
+import type { UserProfile } from "@workspace/api-client-react";
 
 const createUserSchema = z.object({
   email: z.string().email("Enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   fullName: z.string().min(2, "Full name is required"),
   role: z.enum(["vessel_officer", "technical_office"]),
+});
+
+const editUserSchema = z.object({
+  fullName: z.string().min(2, "Full name is required"),
+  role: z.enum(["vessel_officer", "technical_office"]),
+  password: z.union([z.literal(""), z.string().min(8, "Password must be at least 8 characters")]),
 });
 
 function AddUserDialog({ onCreated }: { onCreated: () => void }) {
@@ -111,6 +118,97 @@ function AddUserDialog({ onCreated }: { onCreated: () => void }) {
               <Button type="submit" disabled={createUser.isPending}>
                 {createUser.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Create User
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EditUserDialog({
+  user,
+  open,
+  onOpenChange,
+  onUpdated,
+}: {
+  user: UserProfile;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onUpdated: () => void;
+}) {
+  const { toast } = useToast();
+  const updateUser = useUpdateUser();
+
+  const form = useForm<z.infer<typeof editUserSchema>>({
+    resolver: zodResolver(editUserSchema),
+    values: { fullName: user.fullName, role: user.role, password: "" },
+  });
+
+  const onSubmit = (data: z.infer<typeof editUserSchema>) => {
+    updateUser.mutate(
+      {
+        userId: user.id,
+        data: {
+          fullName: data.fullName,
+          role: data.role,
+          ...(data.password ? { password: data.password } : {}),
+        },
+      },
+      {
+        onSuccess: () => {
+          toast({ title: "User updated" });
+          onUpdated();
+          onOpenChange(false);
+        },
+        onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+      },
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit User — {user.fullName}</DialogTitle>
+          <DialogDescription>
+            Update details, or reset this user's password. Leave the password field blank to keep it unchanged.
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField control={form.control} name="fullName" render={({ field }) => (
+              <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+            <FormField control={form.control} name="role" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Role</FormLabel>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <FormControl>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="vessel_officer">Vessel Officer</SelectItem>
+                    <SelectItem value="technical_office">Technical Office</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField control={form.control} name="password" render={({ field }) => (
+              <FormItem>
+                <FormLabel>New Password (optional)</FormLabel>
+                <FormControl>
+                  <Input type="password" placeholder="Leave blank to keep current password" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <DialogFooter>
+              <Button type="submit" disabled={updateUser.isPending}>
+                {updateUser.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save Changes
               </Button>
             </DialogFooter>
           </form>
@@ -229,6 +327,7 @@ export function UsersManagementCard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [accessDialogUserId, setAccessDialogUserId] = useState<number | null>(null);
+  const [editDialogUserId, setEditDialogUserId] = useState<number | null>(null);
 
   const { data: users, isLoading } = useListUsers({ query: { queryKey: getListUsersQueryKey() } });
   const updateUser = useUpdateUser();
@@ -252,6 +351,7 @@ export function UsersManagementCard() {
   };
 
   const accessDialogUser = users?.find((u) => u.id === accessDialogUserId);
+  const editDialogUser = users?.find((u) => u.id === editDialogUserId);
 
   return (
     <Card>
@@ -313,6 +413,14 @@ export function UsersManagementCard() {
                       <Button
                         size="icon"
                         variant="ghost"
+                        className="h-8 w-8"
+                        onClick={() => setEditDialogUserId(u.id)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
                         className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                         disabled={u.id === currentUser?.id}
                         onClick={() => handleDelete(u.id, u.fullName)}
@@ -339,6 +447,15 @@ export function UsersManagementCard() {
           userName={accessDialogUser.fullName}
           open={accessDialogUserId !== null}
           onOpenChange={(open) => !open && setAccessDialogUserId(null)}
+        />
+      )}
+
+      {editDialogUser && (
+        <EditUserDialog
+          user={editDialogUser}
+          open={editDialogUserId !== null}
+          onOpenChange={(open) => !open && setEditDialogUserId(null)}
+          onUpdated={invalidate}
         />
       )}
     </Card>
