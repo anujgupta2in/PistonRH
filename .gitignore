@@ -3,5 +3,6 @@ dist/
 build/
 .env
 *.log
+*.tsbuildinfo
 .DS_Store
 pnpm-lock.yaml.bak
