@@ -61,3 +61,27 @@ root `.env` file, which `docker compose` loads automatically) — see `.env.exam
 `CORS_ORIGIN` isn't actually used cross-origin here since everything is same-origin in
 production, but the API still checks it, so set it to wherever the container is reachable
 (e.g. `http://localhost:8080` or your real domain).
+
+## Hosted deployment (Render)
+
+`render.yaml` is a Blueprint — Render reads it and provisions a web service (built from
+`Dockerfile`) plus a managed Postgres database in one step, no local Docker needed.
+
+1. Push this repo to GitHub (already done if you're reading this from the deployed repo).
+2. On [render.com](https://dashboard.render.com/blueprints), click **New Blueprint
+   Instance**, connect the `PistonRH` repo, and confirm. It'll ask for `ADMIN_EMAIL` and
+   `ADMIN_PASSWORD` (not stored in the repo) before creating the services.
+3. After the first deploy finishes, check the assigned URL (`https://<something>.onrender.com`
+   in the Render dashboard) and update the `CORS_ORIGIN` env var on the `pistonrh` service to
+   match it exactly if it differs from the `render.yaml` default.
+4. Open the service's **Shell** tab in the Render dashboard and run:
+   ```
+   node dist/seed-admin.cjs
+   ```
+   This bootstraps the first Technical Office admin account, one time.
+5. Share the `https://<something>.onrender.com` URL with vessel officers, along with their
+   login credentials created via Settings → User Management.
+
+Free-tier caveats: the free web service spins down after ~15 minutes idle (first request
+after a gap is slow while it wakes up), and Render's free Postgres databases expire after
+90 days unless upgraded to a paid plan.
