@@ -24,6 +24,7 @@ interface ParsedComponent {
   fittedInCylinder: string;
   fittedAtMeRh: number | null;
   remarks: string;
+  parentComponentId: string;
 }
 
 interface PreviewData {
@@ -82,12 +83,14 @@ function ComponentTable({
   overwriteIds,
   onToggleOverwrite,
   isFuel,
+  showParent,
 }: {
   rows: ParsedComponent[];
   conflictIds: Set<string>;
   overwriteIds: Set<string>;
   onToggleOverwrite: (id: string) => void;
   isFuel?: boolean;
+  showParent?: boolean;
 }) {
   const hasConflicts = rows.some((r) => conflictIds.has(r.componentId));
 
@@ -106,6 +109,7 @@ function ComponentTable({
             <TableHead className="text-right">Accum. RH</TableHead>
             <TableHead>{isFuel ? "Cylinder Slot" : "Cylinder"}</TableHead>
             <TableHead className="text-right">Fitted At ME RH</TableHead>
+            {showParent && <TableHead>Parent</TableHead>}
             {hasConflicts && <TableHead className="text-center w-[100px]">Overwrite?</TableHead>}
           </TableRow>
         </TableHeader>
@@ -149,6 +153,9 @@ function ComponentTable({
                 <TableCell className="text-right text-muted-foreground">
                   {r.fittedAtMeRh != null ? r.fittedAtMeRh.toLocaleString() : "—"}
                 </TableCell>
+                {showParent && (
+                  <TableCell className="text-muted-foreground">{r.parentComponentId || "—"}</TableCell>
+                )}
                 {hasConflicts && (
                   <TableCell className="text-center">
                     {isConflict ? (
@@ -514,6 +521,7 @@ export default function ImportPage() {
             overwriteIds={overwriteIds.fuelValves}
             onToggleOverwrite={(id) => toggleOverwrite("fuelValves", id)}
             isFuel
+            showParent
           />
         </div>
 
@@ -536,6 +544,7 @@ export default function ImportPage() {
             conflictIds={conflictIds.exhaustValves}
             overwriteIds={overwriteIds.exhaustValves}
             onToggleOverwrite={(id) => toggleOverwrite("exhaustValves", id)}
+            showParent
           />
         </div>
       </CardContent>

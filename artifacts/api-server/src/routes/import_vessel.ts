@@ -39,6 +39,7 @@ interface ParsedComponent {
   fittedInCylinder: string;
   fittedAtMeRh: number | null;
   remarks: string;
+  parentComponentId: string;
 }
 
 function parseComponentSheet(wb: XLSX.WorkBook, sheetName: string): ParsedComponent[] {
@@ -53,7 +54,7 @@ function parseComponentSheet(wb: XLSX.WorkBook, sheetName: string): ParsedCompon
   );
 
   const colIdx = (name: string) => headers.findIndex(h => h.includes(name));
-  const idCol      = colIdx("component id");
+  const idCol      = headers.findIndex(h => h.includes("component id") && !h.includes("parent"));
   const typeCol    = colIdx("component type");
   const condCol    = colIdx("condition");
   const statusCol  = colIdx("status");
@@ -61,6 +62,7 @@ function parseComponentSheet(wb: XLSX.WorkBook, sheetName: string): ParsedCompon
   const cylCol     = colIdx("fitted in cylinder");
   const meRhCol    = colIdx("fitted at me rh");
   const remCol     = colIdx("remarks");
+  const parentCol  = colIdx("parent component id");
 
   const results: ParsedComponent[] = [];
   for (let i = 1; i < rawRows.length; i++) {
@@ -80,6 +82,7 @@ function parseComponentSheet(wb: XLSX.WorkBook, sheetName: string): ParsedCompon
       fittedInCylinder:  strVal(row[cylCol]),
       fittedAtMeRh,
       remarks:           strVal(row[remCol]),
+      parentComponentId: parentCol >= 0 ? strVal(row[parentCol]) : "",
     });
   }
   return results;
@@ -284,7 +287,22 @@ router.post(
       }
 
       // ── 4. Import fuel valve components ──────────────────────────────────
-      for (const fv of fuelValves) {
+      // Parents (no "Parent Component ID" in the sheet) are imported first, so
+      // children referencing them by componentId can resolve the parent's
+      // DB-generated integer id afterwards, whether the parent is pre-existing
+      // or was just created in this same import.
+      const fuelValvesOrdered = [
+        ...fuelValves.filter((fv) => !fv.parentComponentId),
+        ...fuelValves.filter((fv) => fv.parentComponentId),
+      ];
+      for (const fv of fuelValvesOrdered) {
+        let parentDbId: number | null = null;
+        if (fv.parentComponentId) {
+          const [parentRow] = await db.select({ id: valveComponents.id }).from(valveComponents)
+            .where(and(eq(valveComponents.vesselId, vesselId), eq(valveComponents.valveType, "fuel"), eq(valveComponents.componentId, fv.parentComponentId)));
+          parentDbId = parentRow?.id ?? null;
+        }
+
         const [existing] = await db.select().from(valveComponents)
           .where(and(eq(valveComponents.vesselId, vesselId), eq(valveComponents.valveType, "fuel"), eq(valveComponents.componentId, fv.componentId)));
 
@@ -299,6 +317,7 @@ router.post(
           totalAccumulatedRh: fv.totalAccumulatedRh,
           fittedAtMeRh:       fv.currentStatus === "In Service" ? fv.fittedAtMeRh : null,
           remarks:            fv.remarks || null,
+          parentComponentId:  parentDbId,
         };
 
         if (existing) {
@@ -334,7 +353,18 @@ router.post(
       }
 
       // ── 5. Import exhaust valve components ────────────────────────────────
-      for (const ev of exhaustValves) {
+      const exhaustValvesOrdered = [
+        ...exhaustValves.filter((ev) => !ev.parentComponentId),
+        ...exhaustValves.filter((ev) => ev.parentComponentId),
+      ];
+      for (const ev of exhaustValvesOrdered) {
+        let parentDbId: number | null = null;
+        if (ev.parentComponentId) {
+          const [parentRow] = await db.select({ id: valveComponents.id }).from(valveComponents)
+            .where(and(eq(valveComponents.vesselId, vesselId), eq(valveComponents.valveType, "exhaust"), eq(valveComponents.componentId, ev.parentComponentId)));
+          parentDbId = parentRow?.id ?? null;
+        }
+
         const [existing] = await db.select().from(valveComponents)
           .where(and(eq(valveComponents.vesselId, vesselId), eq(valveComponents.valveType, "exhaust"), eq(valveComponents.componentId, ev.componentId)));
 
@@ -349,6 +379,7 @@ router.post(
           totalAccumulatedRh: ev.totalAccumulatedRh,
           fittedAtMeRh:       ev.currentStatus === "In Service" ? ev.fittedAtMeRh : null,
           remarks:            ev.remarks || null,
+          parentComponentId:  parentDbId,
         };
 
         if (existing) {
