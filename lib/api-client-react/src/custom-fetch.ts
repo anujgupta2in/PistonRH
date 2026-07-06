@@ -3,7 +3,11 @@ const API_BASE = "/api";
 export const customFetch = async <T>(url: string, options: RequestInit): Promise<T> => {
   const res = await fetch(`${API_BASE}${url}`, { ...options, credentials: "include" });
 
-  if (res.status === 401 && window.location.pathname !== "/login") {
+  // /auth/me is used as a plain "am I logged in?" probe from public pages
+  // (e.g. the landing page), where a 401 is an expected, normal state — not
+  // a dead session to redirect away from.
+  const isAuthProbe = url === "/auth/me";
+  if (res.status === 401 && !isAuthProbe && window.location.pathname !== "/login") {
     window.location.assign("/login");
   }
 

@@ -16,6 +16,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Loader2 } from "lucide-react";
 
+import LandingPage from "@/pages/landing";
 import LoginPage from "@/pages/login";
 import SetupPage from "@/pages/setup";
 import Dashboard from "@/pages/dashboard";
@@ -128,6 +129,30 @@ function AppContent() {
   );
 }
 
+function AuthenticatedApp() {
+  return (
+    <ProtectedRoute>
+      <VesselProvider>
+        <AppContent />
+      </VesselProvider>
+    </ProtectedRoute>
+  );
+}
+
+function RootRoute() {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return user ? <AuthenticatedApp /> : <LandingPage />;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -136,12 +161,9 @@ function App() {
           <AuthProvider>
             <Switch>
               <Route path="/login" component={LoginPage} />
+              <Route path="/" component={RootRoute} />
               <Route>
-                <ProtectedRoute>
-                  <VesselProvider>
-                    <AppContent />
-                  </VesselProvider>
-                </ProtectedRoute>
+                <AuthenticatedApp />
               </Route>
             </Switch>
           </AuthProvider>
