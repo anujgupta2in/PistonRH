@@ -11,6 +11,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarProvider,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -148,7 +149,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </Sidebar>
 
         <main className="flex-1 flex flex-col overflow-hidden">
-          <header className="h-14 border-b bg-card flex items-center px-6 shrink-0 lg:hidden">
+          <header className="h-14 border-b bg-card flex items-center gap-3 px-4 shrink-0 lg:hidden">
+            <SidebarTrigger />
             <div className="font-bold text-sm tracking-tight">ME Components <span className="text-primary">RH Records</span></div>
           </header>
           <div className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
