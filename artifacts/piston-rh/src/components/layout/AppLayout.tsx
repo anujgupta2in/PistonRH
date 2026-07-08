@@ -35,6 +35,7 @@ import {
   FileUp,
   User,
   LogOut,
+  LifeBuoy,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -58,6 +59,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     { title: "Reports", icon: FileBarChart, href: "/reports" },
     { title: "Settings", icon: Settings, href: "/settings" },
     { title: "Import Setup", icon: FileUp, href: "/import" },
+    { title: "Help", icon: LifeBuoy, href: "/help" },
   ];
 
   return (

@@ -28,6 +28,7 @@ import Alerts from "@/pages/alerts";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
 import ImportPage from "@/pages/import";
+import Help from "@/pages/help";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -119,6 +120,7 @@ function AppContent() {
         <Route path="/reports" component={Reports} />
         <Route path="/settings" component={Settings} />
         <Route path="/import" component={ImportPage} />
+        <Route path="/help" component={Help} />
         {/* Legacy valve routes redirect to merged pages */}
         <Route path="/valve-dashboard"><Redirect to="/" /></Route>
         <Route path="/valve-components"><Redirect to="/components" /></Route>
