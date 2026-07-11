@@ -380,6 +380,7 @@ export const listCylindersResponseItem = zod.object({
   "fittedAtMeRh": zod.number().nullish(),
   "lastOverhaulRh": zod.number().nullish(),
   "lastDismantlingRh": zod.number().nullish(),
+  "lastDecarbDate": zod.string().nullish().describe('Date of the last decarb (unit overhaul) as YYYY-MM-DD'),
   "updatedAt": zod.string().optional()
 })
 export const listCylindersResponse = zod.array(listCylindersResponseItem)
@@ -397,7 +398,8 @@ export const updateCylinderBody = zod.object({
   "fittedComponentId": zod.string().nullish(),
   "fittedAtMeRh": zod.number().nullish(),
   "lastOverhaulRh": zod.number().nullish(),
-  "lastDismantlingRh": zod.number().nullish()
+  "lastDismantlingRh": zod.number().nullish(),
+  "lastDecarbDate": zod.string().nullish().describe('Date of the last decarb (unit overhaul) as YYYY-MM-DD')
 })
 
 export const updateCylinderResponse = zod.object({
@@ -408,6 +410,7 @@ export const updateCylinderResponse = zod.object({
   "fittedAtMeRh": zod.number().nullish(),
   "lastOverhaulRh": zod.number().nullish(),
   "lastDismantlingRh": zod.number().nullish(),
+  "lastDecarbDate": zod.string().nullish().describe('Date of the last decarb (unit overhaul) as YYYY-MM-DD'),
   "updatedAt": zod.string().optional()
 })
 
@@ -584,6 +587,7 @@ export const listValveComponentsResponseItem = zod.object({
   "effectiveOverhaulRh": zod.number().optional().describe('Resolved overhaul RH: individual → type-level → vessel default'),
   "effectiveWarningRh": zod.number().optional().describe('Resolved warning RH: individual → type-level → vessel default'),
   "parentComponentId": zod.number().nullish().describe('If set, this is a child (nozzle, spring, etc.) whose location\/status\/RH clock are inherited from the parent valve'),
+  "lastOverhaulDate": zod.string().nullish().describe('Date of the last overhaul as YYYY-MM-DD'),
   "remarks": zod.string().nullish(),
   "liveRh": zod.number().optional(),
   "alertStatus": zod.string().optional(),
@@ -622,6 +626,7 @@ export const createValveComponentBody = zod.object({
   "overhaulRh": zod.number().nullish().describe('Per-component overhaul RH limit (overrides vessel default when set)'),
   "warningRh": zod.number().nullish().describe('Per-component warning RH threshold (overrides vessel default when set)'),
   "parentComponentId": zod.number().nullish().describe('Set to attach this component as a child (nozzle, spring, etc.) of an existing top-level valve component'),
+  "lastOverhaulDate": zod.string().nullish().describe('Date of the last overhaul as YYYY-MM-DD'),
   "remarks": zod.string().optional()
 })
 
@@ -651,6 +656,7 @@ export const getValveComponentResponse = zod.object({
   "effectiveOverhaulRh": zod.number().optional().describe('Resolved overhaul RH: individual → type-level → vessel default'),
   "effectiveWarningRh": zod.number().optional().describe('Resolved warning RH: individual → type-level → vessel default'),
   "parentComponentId": zod.number().nullish().describe('If set, this is a child (nozzle, spring, etc.) whose location\/status\/RH clock are inherited from the parent valve'),
+  "lastOverhaulDate": zod.string().nullish().describe('Date of the last overhaul as YYYY-MM-DD'),
   "remarks": zod.string().nullish(),
   "liveRh": zod.number().optional(),
   "alertStatus": zod.string().optional(),
@@ -685,6 +691,7 @@ export const updateValveComponentBody = zod.object({
   "overhaulRh": zod.number().nullish(),
   "warningRh": zod.number().nullish(),
   "parentComponentId": zod.number().nullish().describe('Set to attach, or null to detach, this component from a parent valve'),
+  "lastOverhaulDate": zod.string().nullish().describe('Date of the last overhaul as YYYY-MM-DD'),
   "remarks": zod.string().optional()
 })
 
@@ -704,6 +711,7 @@ export const updateValveComponentResponse = zod.object({
   "effectiveOverhaulRh": zod.number().optional().describe('Resolved overhaul RH: individual → type-level → vessel default'),
   "effectiveWarningRh": zod.number().optional().describe('Resolved warning RH: individual → type-level → vessel default'),
   "parentComponentId": zod.number().nullish().describe('If set, this is a child (nozzle, spring, etc.) whose location\/status\/RH clock are inherited from the parent valve'),
+  "lastOverhaulDate": zod.string().nullish().describe('Date of the last overhaul as YYYY-MM-DD'),
   "remarks": zod.string().nullish(),
   "liveRh": zod.number().optional(),
   "alertStatus": zod.string().optional(),
@@ -780,6 +788,7 @@ export const getValveDashboardResponse = zod.object({
   "effectiveOverhaulRh": zod.number().optional().describe('Resolved overhaul RH: individual → type-level → vessel default'),
   "effectiveWarningRh": zod.number().optional().describe('Resolved warning RH: individual → type-level → vessel default'),
   "parentComponentId": zod.number().nullish().describe('If set, this is a child (nozzle, spring, etc.) whose location\/status\/RH clock are inherited from the parent valve'),
+  "lastOverhaulDate": zod.string().nullish().describe('Date of the last overhaul as YYYY-MM-DD'),
   "remarks": zod.string().nullish(),
   "liveRh": zod.number().optional(),
   "alertStatus": zod.string().optional(),
@@ -809,6 +818,7 @@ export const getValveDashboardResponse = zod.object({
   "effectiveOverhaulRh": zod.number().optional().describe('Resolved overhaul RH: individual → type-level → vessel default'),
   "effectiveWarningRh": zod.number().optional().describe('Resolved warning RH: individual → type-level → vessel default'),
   "parentComponentId": zod.number().nullish().describe('If set, this is a child (nozzle, spring, etc.) whose location\/status\/RH clock are inherited from the parent valve'),
+  "lastOverhaulDate": zod.string().nullish().describe('Date of the last overhaul as YYYY-MM-DD'),
   "remarks": zod.string().nullish(),
   "liveRh": zod.number().optional(),
   "alertStatus": zod.string().optional(),

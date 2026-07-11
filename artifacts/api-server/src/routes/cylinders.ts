@@ -42,6 +42,7 @@ router.patch("/vessels/:vesselId/cylinders/:cylinderNumber", async (req, res): P
   if ("fittedAtMeRh" in parsed.data) updates.fittedAtMeRh = parsed.data.fittedAtMeRh;
   if ("lastOverhaulRh" in parsed.data) updates.lastOverhaulRh = parsed.data.lastOverhaulRh;
   if ("lastDismantlingRh" in parsed.data) updates.lastDismantlingRh = parsed.data.lastDismantlingRh;
+  if ("lastDecarbDate" in parsed.data) updates.lastDecarbDate = parsed.data.lastDecarbDate;
 
   const [cyl] = await db
     .update(cylinderSetup)
@@ -71,6 +72,7 @@ function toDto(c: typeof cylinderSetup.$inferSelect) {
     fittedAtMeRh: c.fittedAtMeRh,
     lastOverhaulRh: c.lastOverhaulRh,
     lastDismantlingRh: c.lastDismantlingRh,
+    lastDecarbDate: c.lastDecarbDate,
     updatedAt: c.updatedAt.toISOString(),
   };
 }

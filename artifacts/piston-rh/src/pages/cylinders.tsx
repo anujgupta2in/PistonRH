@@ -57,6 +57,7 @@ const TODAY = new Date().toISOString().split("T")[0];
 const baselineSchema = z.object({
   lastOverhaulRh: z.coerce.number().nullable().optional(),
   lastDismantlingRh: z.coerce.number().nullable().optional(),
+  lastDecarbDate: z.string().optional(),
 });
 
 const newPistonSchema = z.object({
@@ -92,6 +93,7 @@ type CylinderData = {
   cylinderNumber: number;
   lastOverhaulRh: number | null;
   lastDismantlingRh: number | null;
+  lastDecarbDate?: string | null;
 };
 type ComponentData = {
   componentId: string;
@@ -186,6 +188,7 @@ function PistonsTab() {
     baselineForm.reset({
       lastOverhaulRh: cyl.lastOverhaulRh ?? undefined,
       lastDismantlingRh: cyl.lastDismantlingRh ?? undefined,
+      lastDecarbDate: cyl.lastDecarbDate ?? "",
     });
     setBaselineDialogCyl(cyl);
   };
@@ -196,7 +199,7 @@ function PistonsTab() {
       {
         vesselId: activeVesselId!,
         cylinderNumber: baselineDialogCyl.cylinderNumber,
-        data: { lastOverhaulRh: data.lastOverhaulRh ?? null, lastDismantlingRh: data.lastDismantlingRh ?? null },
+        data: { lastOverhaulRh: data.lastOverhaulRh ?? null, lastDismantlingRh: data.lastDismantlingRh ?? null, lastDecarbDate: data.lastDecarbDate || null },
       },
       {
         onSuccess: () => {
@@ -345,6 +348,7 @@ function PistonsTab() {
                 <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                   <div><span className="font-medium">Last O/H:</span>{" "}{cyl.lastOverhaulRh != null ? `${cyl.lastOverhaulRh.toLocaleString()} hr` : "—"}</div>
                   <div><span className="font-medium">Last Dis.:</span>{" "}{cyl.lastDismantlingRh != null ? `${cyl.lastDismantlingRh.toLocaleString()} hr` : "—"}</div>
+                  <div className="col-span-2"><span className="font-medium">Last Decarb:</span>{" "}{(cyl as CylinderData).lastDecarbDate || "—"}</div>
                 </div>
                 <div className="space-y-2">
                   <div className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Fitted Components</div>
@@ -396,6 +400,14 @@ function PistonsTab() {
                   <FormItem>
                     <FormLabel>Last Dismantling at ME RH</FormLabel>
                     <FormControl><Input type="number" placeholder="e.g. 36000" {...field} value={field.value ?? ""} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={baselineForm.control} name="lastDecarbDate" render={({ field }) => (
+                  <FormItem className="col-span-2">
+                    <FormLabel>Last Decarb Date</FormLabel>
+                    <FormControl><Input type="date" {...field} value={field.value ?? ""} /></FormControl>
+                    <FormDescription className="text-xs">Date the last decarb (unit overhaul) was carried out.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )} />

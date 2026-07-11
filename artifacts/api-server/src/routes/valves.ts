@@ -72,6 +72,7 @@ function toDto(
     overhaulRh: c.overhaulRh,
     warningRh: c.warningRh,
     parentComponentId: c.parentComponentId,
+    lastOverhaulDate: c.lastOverhaulDate,
     effectiveOverhaulRh,
     effectiveWarningRh,
     remarks: c.remarks,
@@ -109,7 +110,7 @@ router.post("/vessels/:vesselId/valves/:valveType/components", async (req, res):
     res.status(400).json({ error: "Invalid params" });
     return;
   }
-  const { componentId, componentType, condition, currentStatus, currentLocation, totalAccumulatedRh, fittedAtMeRh, remarks, parentComponentId } = req.body;
+  const { componentId, componentType, condition, currentStatus, currentLocation, totalAccumulatedRh, fittedAtMeRh, remarks, parentComponentId, lastOverhaulDate } = req.body;
   if (!componentId || !componentType || !condition || !currentStatus) {
     res.status(400).json({ error: "componentId, componentType, condition, currentStatus are required" });
     return;
@@ -152,6 +153,7 @@ router.post("/vessels/:vesselId/valves/:valveType/components", async (req, res):
       overhaulRh: compOverhaulRh ?? null,
       warningRh: compWarningRh ?? null,
       parentComponentId: parentComponentId ?? null,
+      lastOverhaulDate: lastOverhaulDate ?? null,
       remarks: remarks ?? null,
     })
     .returning();
@@ -196,6 +198,7 @@ router.patch("/vessels/:vesselId/valves/:valveType/components/:componentId", asy
   if ("fittedAtMeRh" in b) updates.fittedAtMeRh = b.fittedAtMeRh;
   if ("overhaulRh" in b) updates.overhaulRh = b.overhaulRh;
   if ("warningRh" in b) updates.warningRh = b.warningRh;
+  if ("lastOverhaulDate" in b) updates.lastOverhaulDate = b.lastOverhaulDate;
   if ("remarks" in b) updates.remarks = b.remarks;
 
   if ("parentComponentId" in b) {

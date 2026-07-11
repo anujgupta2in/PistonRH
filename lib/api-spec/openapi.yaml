@@ -1364,6 +1364,9 @@ components:
           type: ["number", "null"]
         lastDismantlingRh:
           type: ["number", "null"]
+        lastDecarbDate:
+          type: ["string", "null"]
+          description: "Date of the last decarb (unit overhaul) as YYYY-MM-DD"
         updatedAt:
           type: string
 
@@ -1378,6 +1381,9 @@ components:
           type: ["number", "null"]
         lastDismantlingRh:
           type: ["number", "null"]
+        lastDecarbDate:
+          type: ["string", "null"]
+          description: "Date of the last decarb (unit overhaul) as YYYY-MM-DD"
 
     # ─── Movement ────────────────────────────────────────────────────────────
     MovementEntry:
@@ -1578,6 +1584,9 @@ components:
         parentComponentId:
           type: ["integer", "null"]
           description: "If set, this is a child (nozzle, spring, etc.) whose location/status/RH clock are inherited from the parent valve"
+        lastOverhaulDate:
+          type: ["string", "null"]
+          description: "Date of the last overhaul as YYYY-MM-DD"
         remarks:
           type: ["string", "null"]
         liveRh:
@@ -1620,6 +1629,9 @@ components:
         parentComponentId:
           type: ["integer", "null"]
           description: "Set to attach this component as a child (nozzle, spring, etc.) of an existing top-level valve component"
+        lastOverhaulDate:
+          type: ["string", "null"]
+          description: "Date of the last overhaul as YYYY-MM-DD"
         remarks:
           type: string
 
@@ -1645,6 +1657,9 @@ components:
         parentComponentId:
           type: ["integer", "null"]
           description: "Set to attach, or null to detach, this component from a parent valve"
+        lastOverhaulDate:
+          type: ["string", "null"]
+          description: "Date of the last overhaul as YYYY-MM-DD"
         remarks:
           type: string
 

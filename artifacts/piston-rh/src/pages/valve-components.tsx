@@ -42,6 +42,7 @@ const formSchema = z.object({
   overhaulRh: z.coerce.number().min(1).optional().nullable(),
   warningRh: z.coerce.number().min(1).optional().nullable(),
   parentComponentId: z.coerce.number().optional().nullable(),
+  lastOverhaulDate: z.string().optional(),
   remarks: z.string().optional(),
 });
 
@@ -72,12 +73,12 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
 
   const addForm = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { componentId: "", componentType: "", condition: "New", currentStatus: "Onboard Spare", currentLocation: "", totalAccumulatedRh: 0, overhaulRh: null, warningRh: null, parentComponentId: null, remarks: "" },
+    defaultValues: { componentId: "", componentType: "", condition: "New", currentStatus: "Onboard Spare", currentLocation: "", totalAccumulatedRh: 0, overhaulRh: null, warningRh: null, parentComponentId: null, lastOverhaulDate: "", remarks: "" },
   });
 
   const editForm = useForm<EditValues>({
     resolver: zodResolver(editSchema),
-    defaultValues: { componentType: "", condition: "New", currentStatus: "Onboard Spare", currentLocation: "", totalAccumulatedRh: 0, overhaulRh: null, warningRh: null, parentComponentId: null, remarks: "" },
+    defaultValues: { componentType: "", condition: "New", currentStatus: "Onboard Spare", currentLocation: "", totalAccumulatedRh: 0, overhaulRh: null, warningRh: null, parentComponentId: null, lastOverhaulDate: "", remarks: "" },
   });
 
   // A top-level Fuel/Exhaust Valve's own threshold is its "Overhaul Interval";
@@ -89,7 +90,7 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
 
   const onAdd = (data: FormValues) => {
     createComp.mutate(
-      { vesselId: activeVesselId!, valveType, data: { componentId: data.componentId, componentType: data.componentType, condition: data.condition, currentStatus: data.currentStatus, currentLocation: data.currentLocation || data.currentStatus, totalAccumulatedRh: data.totalAccumulatedRh, overhaulRh: data.overhaulRh ?? undefined, warningRh: data.warningRh ?? undefined, parentComponentId: data.parentComponentId ?? undefined, remarks: data.remarks } },
+      { vesselId: activeVesselId!, valveType, data: { componentId: data.componentId, componentType: data.componentType, condition: data.condition, currentStatus: data.currentStatus, currentLocation: data.currentLocation || data.currentStatus, totalAccumulatedRh: data.totalAccumulatedRh, overhaulRh: data.overhaulRh ?? undefined, warningRh: data.warningRh ?? undefined, parentComponentId: data.parentComponentId ?? undefined, lastOverhaulDate: data.lastOverhaulDate || null, remarks: data.remarks } },
       {
         onSuccess: () => { toast({ title: `${label} component added` }); invalidate(); setIsAddOpen(false); addForm.reset(); },
         onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
@@ -100,7 +101,7 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
   const onEdit = (data: EditValues) => {
     if (!editingComp) return;
     updateComp.mutate(
-      { vesselId: activeVesselId!, valveType, componentId: editingComp.componentId, data: { componentType: data.componentType, condition: data.condition, currentStatus: data.currentStatus, currentLocation: data.currentLocation, totalAccumulatedRh: data.totalAccumulatedRh, overhaulRh: data.overhaulRh ?? undefined, warningRh: data.warningRh ?? undefined, parentComponentId: data.parentComponentId ?? null, remarks: data.remarks } },
+      { vesselId: activeVesselId!, valveType, componentId: editingComp.componentId, data: { componentType: data.componentType, condition: data.condition, currentStatus: data.currentStatus, currentLocation: data.currentLocation, totalAccumulatedRh: data.totalAccumulatedRh, overhaulRh: data.overhaulRh ?? undefined, warningRh: data.warningRh ?? undefined, parentComponentId: data.parentComponentId ?? null, lastOverhaulDate: data.lastOverhaulDate || null, remarks: data.remarks } },
       {
         onSuccess: () => { toast({ title: "Component updated" }); invalidate(); setEditingComp(null); },
         onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
@@ -120,7 +121,7 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
   };
 
   const openEdit = (comp: NonNullable<typeof comps>[number]) => {
-    editForm.reset({ componentType: comp.componentType, condition: comp.condition, currentStatus: comp.currentStatus, currentLocation: comp.currentLocation, totalAccumulatedRh: comp.totalAccumulatedRh, overhaulRh: comp.overhaulRh ?? null, warningRh: comp.warningRh ?? null, parentComponentId: comp.parentComponentId ?? null, remarks: comp.remarks ?? "" });
+    editForm.reset({ componentType: comp.componentType, condition: comp.condition, currentStatus: comp.currentStatus, currentLocation: comp.currentLocation, totalAccumulatedRh: comp.totalAccumulatedRh, overhaulRh: comp.overhaulRh ?? null, warningRh: comp.warningRh ?? null, parentComponentId: comp.parentComponentId ?? null, lastOverhaulDate: comp.lastOverhaulDate ?? "", remarks: comp.remarks ?? "" });
     setEditingComp({ componentId: comp.componentId });
   };
 
@@ -217,6 +218,9 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
                 <FormField control={addForm.control} name="totalAccumulatedRh" render={({ field }) => (
                   <FormItem><FormLabel>Accumulated RH (hrs)</FormLabel><FormControl><Input type="number" step="1" min={0} {...field} /></FormControl><FormDescription className="text-xs">Previously accumulated running hours before adding to this record.</FormDescription><FormMessage /></FormItem>
                 )} />
+                <FormField control={addForm.control} name="lastOverhaulDate" render={({ field }) => (
+                  <FormItem><FormLabel>Last Overhaul Date (optional)</FormLabel><FormControl><Input type="date" {...field} value={field.value ?? ""} /></FormControl><FormDescription className="text-xs">Date this component was last overhauled.</FormDescription><FormMessage /></FormItem>
+                )} />
                 <div className="border rounded-md p-3 space-y-2 bg-muted/20">
                   <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Individual Thresholds (optional)</p>
                   <p className="text-xs text-muted-foreground">Override vessel-level defaults for this component only.</p>
@@ -303,6 +307,9 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
               <FormField control={editForm.control} name="totalAccumulatedRh" render={({ field }) => (
                 <FormItem><FormLabel>Total Accumulated RH (hrs)</FormLabel><FormControl><Input type="number" step="1" min={0} {...field} /></FormControl><FormMessage /></FormItem>
               )} />
+              <FormField control={editForm.control} name="lastOverhaulDate" render={({ field }) => (
+                <FormItem><FormLabel>Last Overhaul Date (optional)</FormLabel><FormControl><Input type="date" {...field} value={field.value ?? ""} /></FormControl><FormDescription className="text-xs">Date this component was last overhauled.</FormDescription><FormMessage /></FormItem>
+              )} />
               <div className="border rounded-md p-3 space-y-2 bg-muted/20">
                 <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Individual Thresholds (optional)</p>
                 <p className="text-xs text-muted-foreground">Override vessel-level defaults for this component only.</p>
@@ -341,6 +348,7 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
                 <TableHead>Type</TableHead>
                 <TableHead>Condition</TableHead>
                 <TableHead>Status / Location</TableHead>
+                <TableHead>Last O/H Date</TableHead>
                 <TableHead className="text-right">Live RH</TableHead>
                 <TableHead>Alert</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -359,6 +367,7 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
                         <div className="text-xs text-muted-foreground">{comp.currentLocation}</div>
                       )}
                     </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{comp.lastOverhaulDate ?? "—"}</TableCell>
                     <TableCell className="text-right font-mono font-medium">{(comp.liveRh ?? comp.totalAccumulatedRh).toLocaleString()}</TableCell>
                     <TableCell><StatusBadge status={comp.alertStatus ?? "OK"} label={getStatusLabel(comp.alertStatus ?? "OK", "overhaul")} /></TableCell>
                     <TableCell className="text-right">
@@ -385,6 +394,7 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
                       <TableCell>
                         <div className="text-xs text-muted-foreground">Inherited from {comp.componentId}</div>
                       </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{child.lastOverhaulDate ?? "—"}</TableCell>
                       <TableCell className="text-right font-mono font-medium">{(child.liveRh ?? child.totalAccumulatedRh).toLocaleString()}</TableCell>
                       <TableCell><StatusBadge status={child.alertStatus ?? "OK"} label={getStatusLabel(child.alertStatus ?? "OK", "life")} /></TableCell>
                       <TableCell className="text-right">
@@ -402,7 +412,7 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
                 </Fragment>
               )) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                  <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
                     No {label} components yet. Click <strong>Add {label}</strong> to register one.
                   </TableCell>
                 </TableRow>

@@ -18,6 +18,7 @@ export const valveComponents = pgTable(
     fittedAtMeRh: real("fitted_at_me_rh"),
     overhaulRh: integer("overhaul_rh"),
     warningRh: integer("warning_rh"),
+    lastOverhaulDate: text("last_overhaul_date"), // ISO date string: YYYY-MM-DD
     // Child components (e.g. nozzles, springs) reference their parent valve here.
     // A child's location/status/running-hours clock are inherited from the parent
     // at query time (see resolveValveComponentState in the API) — only its own

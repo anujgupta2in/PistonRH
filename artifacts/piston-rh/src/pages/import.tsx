@@ -25,6 +25,8 @@ interface ParsedComponent {
   fittedAtMeRh: number | null;
   remarks: string;
   parentComponentId: string;
+  lastDecarbDate: string;
+  lastOverhaulDate: string;
 }
 
 interface PreviewData {
@@ -84,6 +86,7 @@ function ComponentTable({
   onToggleOverwrite,
   isFuel,
   showParent,
+  dateColumn,
 }: {
   rows: ParsedComponent[];
   conflictIds: Set<string>;
@@ -91,6 +94,7 @@ function ComponentTable({
   onToggleOverwrite: (id: string) => void;
   isFuel?: boolean;
   showParent?: boolean;
+  dateColumn?: "decarb" | "overhaul";
 }) {
   const hasConflicts = rows.some((r) => conflictIds.has(r.componentId));
 
@@ -109,6 +113,8 @@ function ComponentTable({
             <TableHead className="text-right">Accum. RH</TableHead>
             <TableHead>{isFuel ? "Cylinder Slot" : "Cylinder"}</TableHead>
             <TableHead className="text-right">Fitted At ME RH</TableHead>
+            {dateColumn === "decarb" && <TableHead>Last Decarb</TableHead>}
+            {dateColumn === "overhaul" && <TableHead>Last O/H Date</TableHead>}
             {showParent && <TableHead>Parent</TableHead>}
             {hasConflicts && <TableHead className="text-center w-[100px]">Overwrite?</TableHead>}
           </TableRow>
@@ -153,6 +159,12 @@ function ComponentTable({
                 <TableCell className="text-right text-muted-foreground">
                   {r.fittedAtMeRh != null ? r.fittedAtMeRh.toLocaleString() : "—"}
                 </TableCell>
+                {dateColumn === "decarb" && (
+                  <TableCell className="text-muted-foreground">{r.lastDecarbDate || "—"}</TableCell>
+                )}
+                {dateColumn === "overhaul" && (
+                  <TableCell className="text-muted-foreground">{r.lastOverhaulDate || "—"}</TableCell>
+                )}
                 {showParent && (
                   <TableCell className="text-muted-foreground">{r.parentComponentId || "—"}</TableCell>
                 )}
@@ -500,6 +512,7 @@ export default function ImportPage() {
             conflictIds={conflictIds.pistons}
             overwriteIds={overwriteIds.pistons}
             onToggleOverwrite={(id) => toggleOverwrite("pistons", id)}
+            dateColumn="decarb"
           />
         </div>
 
@@ -524,6 +537,7 @@ export default function ImportPage() {
             onToggleOverwrite={(id) => toggleOverwrite("fuelValves", id)}
             isFuel
             showParent
+            dateColumn="overhaul"
           />
         </div>
 
@@ -547,6 +561,7 @@ export default function ImportPage() {
             overwriteIds={overwriteIds.exhaustValves}
             onToggleOverwrite={(id) => toggleOverwrite("exhaustValves", id)}
             showParent
+            dateColumn="overhaul"
           />
         </div>
       </CardContent>

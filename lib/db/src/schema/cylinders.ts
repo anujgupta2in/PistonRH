@@ -13,6 +13,7 @@ export const cylinderSetup = pgTable(
     fittedAtMeRh: real("fitted_at_me_rh"),
     lastOverhaulRh: real("last_overhaul_rh").default(0),
     lastDismantlingRh: real("last_dismantling_rh").default(0),
+    lastDecarbDate: text("last_decarb_date"), // ISO date string: YYYY-MM-DD
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (t) => [unique("uq_cylinder").on(t.vesselId, t.cylinderNumber)]

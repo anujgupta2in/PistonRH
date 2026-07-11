@@ -212,6 +212,11 @@ export type CylinderLastOverhaulRh = number | null;
 
 export type CylinderLastDismantlingRh = number | null;
 
+/**
+ * Date of the last decarb (unit overhaul) as YYYY-MM-DD
+ */
+export type CylinderLastDecarbDate = string | null;
+
 export interface Cylinder {
   id: number;
   vesselId: number;
@@ -220,6 +225,8 @@ export interface Cylinder {
   fittedAtMeRh?: CylinderFittedAtMeRh;
   lastOverhaulRh?: CylinderLastOverhaulRh;
   lastDismantlingRh?: CylinderLastDismantlingRh;
+  /** Date of the last decarb (unit overhaul) as YYYY-MM-DD */
+  lastDecarbDate?: CylinderLastDecarbDate;
   updatedAt?: string;
 }
 
@@ -231,11 +238,18 @@ export type CylinderUpdateLastOverhaulRh = number | null;
 
 export type CylinderUpdateLastDismantlingRh = number | null;
 
+/**
+ * Date of the last decarb (unit overhaul) as YYYY-MM-DD
+ */
+export type CylinderUpdateLastDecarbDate = string | null;
+
 export interface CylinderUpdate {
   fittedComponentId?: CylinderUpdateFittedComponentId;
   fittedAtMeRh?: CylinderUpdateFittedAtMeRh;
   lastOverhaulRh?: CylinderUpdateLastOverhaulRh;
   lastDismantlingRh?: CylinderUpdateLastDismantlingRh;
+  /** Date of the last decarb (unit overhaul) as YYYY-MM-DD */
+  lastDecarbDate?: CylinderUpdateLastDecarbDate;
 }
 
 export type MovementEntryRemarks = string | null;
@@ -339,6 +353,11 @@ export type ValveComponentWarningRh = number | null;
  */
 export type ValveComponentParentComponentId = number | null;
 
+/**
+ * Date of the last overhaul as YYYY-MM-DD
+ */
+export type ValveComponentLastOverhaulDate = string | null;
+
 export type ValveComponentRemarks = string | null;
 
 export interface ValveComponent {
@@ -362,6 +381,8 @@ export interface ValveComponent {
   effectiveWarningRh?: number;
   /** If set, this is a child (nozzle, spring, etc.) whose location/status/RH clock are inherited from the parent valve */
   parentComponentId?: ValveComponentParentComponentId;
+  /** Date of the last overhaul as YYYY-MM-DD */
+  lastOverhaulDate?: ValveComponentLastOverhaulDate;
   remarks?: ValveComponentRemarks;
   liveRh?: number;
   alertStatus?: string;
@@ -386,6 +407,11 @@ export type ValveComponentInputWarningRh = number | null;
  */
 export type ValveComponentInputParentComponentId = number | null;
 
+/**
+ * Date of the last overhaul as YYYY-MM-DD
+ */
+export type ValveComponentInputLastOverhaulDate = string | null;
+
 export interface ValveComponentInput {
   /** @minLength 1 */
   componentId: string;
@@ -401,6 +427,8 @@ export interface ValveComponentInput {
   warningRh?: ValveComponentInputWarningRh;
   /** Set to attach this component as a child (nozzle, spring, etc.) of an existing top-level valve component */
   parentComponentId?: ValveComponentInputParentComponentId;
+  /** Date of the last overhaul as YYYY-MM-DD */
+  lastOverhaulDate?: ValveComponentInputLastOverhaulDate;
   remarks?: string;
 }
 
@@ -415,6 +443,11 @@ export type ValveComponentUpdateWarningRh = number | null;
  */
 export type ValveComponentUpdateParentComponentId = number | null;
 
+/**
+ * Date of the last overhaul as YYYY-MM-DD
+ */
+export type ValveComponentUpdateLastOverhaulDate = string | null;
+
 export interface ValveComponentUpdate {
   componentType?: string;
   condition?: string;
@@ -426,6 +459,8 @@ export interface ValveComponentUpdate {
   warningRh?: ValveComponentUpdateWarningRh;
   /** Set to attach, or null to detach, this component from a parent valve */
   parentComponentId?: ValveComponentUpdateParentComponentId;
+  /** Date of the last overhaul as YYYY-MM-DD */
+  lastOverhaulDate?: ValveComponentUpdateLastOverhaulDate;
   remarks?: string;
 }
 

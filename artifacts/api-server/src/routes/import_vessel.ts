@@ -1,7 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
 import * as XLSX from "xlsx";
-import { db, vessels, components, valveComponents, valveCylinderSlots, monthlyRhLog } from "@workspace/db";
+import { db, vessels, components, valveComponents, valveCylinderSlots, monthlyRhLog, cylinderSetup } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 
 const router = Router();
@@ -15,6 +15,21 @@ function strVal(v: unknown): string {
 function numVal(v: unknown): number {
   const n = parseFloat(String(v ?? "0").replace(/[^0-9.-]/g, ""));
   return isNaN(n) ? 0 : n;
+}
+
+// Normalize a date cell to "YYYY-MM-DD". Excel stores dates as serial numbers
+// unless the cell is formatted as text, so both forms must be accepted.
+function dateVal(v: unknown): string {
+  if (v == null || v === "") return "";
+  if (typeof v === "number" && v > 20000 && v < 80000) {
+    // Excel serial date (days since 1899-12-30); 25569 = days to Unix epoch
+    return new Date(Math.round((v - 25569) * 86400 * 1000)).toISOString().slice(0, 10);
+  }
+  const s = String(v).trim();
+  const m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}`;
+  const parsed = new Date(s);
+  return isNaN(parsed.getTime()) ? "" : parsed.toISOString().slice(0, 10);
 }
 
 function parseVesselInfo(wb: XLSX.WorkBook): Record<string, string> {
@@ -40,6 +55,11 @@ interface ParsedComponent {
   fittedAtMeRh: number | null;
   remarks: string;
   parentComponentId: string;
+  // "Last Decarb Date" column (Piston Components sheet) — applies to the
+  // cylinder the piston is fitted in. "Last Overhaul Date" column (valve
+  // sheets) — applies to the valve component itself. Both YYYY-MM-DD or "".
+  lastDecarbDate: string;
+  lastOverhaulDate: string;
 }
 
 function parseComponentSheet(wb: XLSX.WorkBook, sheetName: string): ParsedComponent[] {
@@ -63,6 +83,8 @@ function parseComponentSheet(wb: XLSX.WorkBook, sheetName: string): ParsedCompon
   const meRhCol    = colIdx("fitted at me rh");
   const remCol     = colIdx("remarks");
   const parentCol  = colIdx("parent component id");
+  const decarbCol  = colIdx("last decarb date");
+  const lastOhCol  = colIdx("last overhaul date");
 
   const results: ParsedComponent[] = [];
   for (let i = 1; i < rawRows.length; i++) {
@@ -83,6 +105,8 @@ function parseComponentSheet(wb: XLSX.WorkBook, sheetName: string): ParsedCompon
       fittedAtMeRh,
       remarks:           strVal(row[remCol]),
       parentComponentId: parentCol >= 0 ? strVal(row[parentCol]) : "",
+      lastDecarbDate:    decarbCol >= 0 ? dateVal(row[decarbCol]) : "",
+      lastOverhaulDate:  lastOhCol >= 0 ? dateVal(row[lastOhCol]) : "",
     });
   }
   return results;
@@ -284,6 +308,21 @@ router.post(
           await db.insert(components).values(row);
           results.pistonCreated++;
         }
+
+        // "Last Decarb Date" on an in-service piston row applies to the Unit
+        // (cylinder) it is fitted in, not the piston component itself.
+        const applied = !existing || overwritePistons.has(p.componentId);
+        if (applied && p.lastDecarbDate && p.currentStatus === "In Service") {
+          const parsed = parseCylSlot(p.fittedInCylinder);
+          if (parsed) {
+            await db.insert(cylinderSetup)
+              .values({ vesselId, cylinderNumber: parsed.cyl, lastDecarbDate: p.lastDecarbDate })
+              .onConflictDoUpdate({
+                target: [cylinderSetup.vesselId, cylinderSetup.cylinderNumber],
+                set: { lastDecarbDate: p.lastDecarbDate, updatedAt: new Date() },
+              });
+          }
+        }
       }
 
       // ── 4. Import fuel valve components ──────────────────────────────────
@@ -318,6 +357,7 @@ router.post(
           fittedAtMeRh:       fv.currentStatus === "In Service" ? fv.fittedAtMeRh : null,
           remarks:            fv.remarks || null,
           parentComponentId:  parentDbId,
+          lastOverhaulDate:   fv.lastOverhaulDate || null,
         };
 
         if (existing) {
@@ -380,6 +420,7 @@ router.post(
           fittedAtMeRh:       ev.currentStatus === "In Service" ? ev.fittedAtMeRh : null,
           remarks:            ev.remarks || null,
           parentComponentId:  parentDbId,
+          lastOverhaulDate:   ev.lastOverhaulDate || null,
         };
 
         if (existing) {
