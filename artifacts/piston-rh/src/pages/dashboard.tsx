@@ -58,7 +58,7 @@ function PistonDashboardPanel() {
                     <div className="text-xs text-muted-foreground">{alert.type}</div>
                   </div>
                   <div className="text-right">
-                    <StatusBadge status={alert.status} label={getStatusLabel(alert.status, "life")} />
+                    <StatusBadge status={alert.status} label={getStatusLabel(alert.status, alert.type.includes("Overhaul") ? "overhaul" : "life")} />
                     <div className="text-xs font-mono mt-1 text-muted-foreground">
                       {alert.totalRh.toLocaleString()} / {alert.limit.toLocaleString()}
                     </div>

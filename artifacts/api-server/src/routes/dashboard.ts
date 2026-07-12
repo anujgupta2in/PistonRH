@@ -116,9 +116,25 @@ router.get("/vessels/:vesselId/dashboard", async (req, res): Promise<void> => {
     };
   });
 
-  // Build alerts from all fitted components across all cylinders
+  // Build alerts: the Unit's own overhaul/decarb cycle, per-component wear,
+  // and (only when a baseline exists) the dismantling routine.
   const alerts = [];
   for (const cs of cylinderStatus) {
+    const primaryComp = cs.components[0];
+
+    // Unit overhaul (decarb) cycle — RH since last unit overhaul vs the
+    // vessel's unit overhaul interval. This mirrors the UNIT badge status.
+    if (cs.overallAlertStatus !== "OK") {
+      alerts.push({
+        cylinder: cs.cylinder,
+        componentId: primaryComp?.componentId ?? `Cyl ${cs.cylinder}`,
+        type: "Unit Overhaul (Decarb)",
+        status: cs.overallAlertStatus,
+        totalRh: cs.rhSinceOverhaul,
+        limit: cfg.crownOverhaulRh,
+      });
+    }
+
     for (const comp of cs.components) {
       if (comp.alertStatus !== "OK") {
         alerts.push({
@@ -127,12 +143,17 @@ router.get("/vessels/:vesselId/dashboard", async (req, res): Promise<void> => {
           type: `${comp.componentType} Overhaul`,
           status: comp.alertStatus,
           totalRh: comp.totalRh,
-          limit: cfg.crownOverhaulRh,
+          limit: comp.limit,
         });
       }
     }
-    if (cs.dismantlingAlert !== "OK") {
-      const primaryComp = cs.components[0];
+
+    // A dismantling baseline of 0 means "never recorded" (the default on new
+    // and imported vessels) — raising an alert against the vessel's whole-life
+    // ME RH would be noise, so only alert once a baseline has been set.
+    const cylRow = allCylinders.find((c) => c.cylinderNumber === cs.cylinder);
+    const hasDismantlingBaseline = (cylRow?.lastDismantlingRh ?? 0) > 0;
+    if (hasDismantlingBaseline && cs.dismantlingAlert !== "OK") {
       alerts.push({
         cylinder: cs.cylinder,
         componentId: primaryComp?.componentId ?? `Cyl ${cs.cylinder}`,
