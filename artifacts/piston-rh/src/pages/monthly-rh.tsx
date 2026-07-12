@@ -29,6 +29,12 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const todayIso = format(new Date(), "yyyy-MM-dd");
 
+// Never let one malformed date (e.g. from a bad import) crash the whole page
+function safeFormatDate(iso: string, fmt: string): string {
+  const d = parseISO(iso);
+  return isNaN(d.getTime()) ? iso : format(d, fmt);
+}
+
 const formSchema = z.object({
   logDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Must be a valid date"),
   meTotalRh: z.coerce.number().min(0),
@@ -303,7 +309,7 @@ export default function MonthlyRh() {
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
                         <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                        {format(parseISO(log.logDate), "dd MMM yyyy")}
+                        {safeFormatDate(log.logDate, "dd MMM yyyy")}
                       </div>
                     </TableCell>
                     <TableCell className="text-right font-mono font-medium">{log.meTotalRh.toLocaleString()}</TableCell>

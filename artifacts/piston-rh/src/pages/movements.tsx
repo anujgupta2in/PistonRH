@@ -35,6 +35,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ValveMovementsPanel } from "./valve-movements";
 
+// Never let one malformed date (e.g. from a bad import) crash the whole page
+function safeFormatDate(iso: string, fmt: string): string {
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? iso : format(d, fmt);
+}
+
 const ACTION_TYPES = ["Fit", "Remove", "Rotate", "Land Ashore", "Receive Onboard", "Scrap"];
 
 const SHORE_LOCATIONS = ["Onboard Spare", "Engine Room Spares", "Landed Ashore", "Under Reconditioning", "Scrapped"];
@@ -388,7 +394,7 @@ function PistonMovementsPanel() {
                 movements.map((mov) => (
                   <TableRow key={mov.id}>
                     <TableCell className="font-medium whitespace-nowrap">
-                      {format(new Date(mov.movementDate), "dd MMM yyyy")}
+                      {safeFormatDate(mov.movementDate, "dd MMM yyyy")}
                     </TableCell>
                     <TableCell className="font-mono">{mov.meRh.toLocaleString()}</TableCell>
                     <TableCell className="font-bold">{mov.componentId}</TableCell>

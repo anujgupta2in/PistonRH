@@ -26,6 +26,12 @@ import { Fragment } from "react";
 import { Button } from "@/components/ui/button";
 import { getStatusLabel } from "@/lib/utils";
 
+// Never let one malformed date (e.g. from a bad import) crash the whole page
+function safeFormatDate(iso: string, fmt: string): string {
+  const d = parseISO(iso);
+  return isNaN(d.getTime()) ? iso : format(d, fmt);
+}
+
 function ValveCylinderStatusCard({ title, description, data }: {
   title: string;
   description: string;
@@ -248,7 +254,7 @@ export default function Reports() {
                   {rhLogs?.map(log => (
                     <TableRow key={log.id}>
                       <TableCell className="font-medium">
-                        {format(parseISO(log.logDate), 'dd MMM yyyy')}
+                        {safeFormatDate(log.logDate, 'dd MMM yyyy')}
                       </TableCell>
                       <TableCell className="text-right font-mono">{log.meTotalRh.toLocaleString()}</TableCell>
                       <TableCell className="text-right font-mono text-primary font-bold">
@@ -407,7 +413,7 @@ export default function Reports() {
                   {movements && movements.length > 0 ? movements.map(mov => (
                     <TableRow key={mov.id}>
                       <TableCell className="font-medium whitespace-nowrap">
-                        {format(new Date(mov.movementDate), 'dd/MM/yyyy')}
+                        {safeFormatDate(mov.movementDate, 'dd/MM/yyyy')}
                       </TableCell>
                       <TableCell>
                         <span className="bg-muted px-2 py-1 rounded text-xs">{mov.action}</span>

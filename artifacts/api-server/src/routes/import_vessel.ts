@@ -21,6 +21,8 @@ function numVal(v: unknown): number {
 // unless the cell is formatted as text, so both forms must be accepted.
 function dateVal(v: unknown): string {
   if (v == null || v === "") return "";
+  // A serial may arrive as a string if the cell was read via strVal first
+  if (typeof v === "string" && /^\d+(\.\d+)?$/.test(v.trim())) v = parseFloat(v.trim());
   if (typeof v === "number" && v > 20000 && v < 80000) {
     // Excel serial date (days since 1899-12-30); 25569 = days to Unix epoch
     return new Date(Math.round((v - 25569) * 86400 * 1000)).toISOString().slice(0, 10);
@@ -265,7 +267,8 @@ router.post(
 
       // ── 2. Create initial ME RH log entry ────────────────────────────────
       const meRhStr   = sv.me["Current ME Total Running Hours"];
-      const meDateStr = sv.me["Date of Reading (YYYY-MM-DD)"];
+      // dateVal also converts an Excel date-cell serial (e.g. "46173") to ISO
+      const meDateStr = dateVal(sv.me["Date of Reading (YYYY-MM-DD)"]);
       if (meRhStr && meDateStr) {
         const meRh = parseFloat(meRhStr);
         if (!isNaN(meRh) && meRh > 0) {
