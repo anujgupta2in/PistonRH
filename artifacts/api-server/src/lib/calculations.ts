@@ -39,9 +39,12 @@ interface ValveComponentState {
 }
 
 /**
- * A child valve component (nozzle, spring, etc.) has no independent location/status/RH clock —
- * it always mirrors its parent valve. Resolving this at read time (rather than duplicating the
- * parent's fields onto the child row) keeps a single source of truth as the parent moves.
+ * A child valve component (nozzle, spring, etc.) has no independent location or
+ * status — it always mirrors its parent valve, and while the parent is in
+ * service it runs hours from the parent's fitting point. Its accumulated LIFE
+ * hours, however, are its own: a new nozzle fitted to a 20,000-hr valve body
+ * starts from its own prior hours, not the body's. (Fuel valve overhaul cycle
+ * vs body lifetime is likewise separated via lastOverhaulRh on the parent.)
  */
 export function resolveValveComponentState<T extends ValveComponentState & { id: number; parentComponentId: number | null }>(
   comp: T,
@@ -53,7 +56,7 @@ export function resolveValveComponentState<T extends ValveComponentState & { id:
       return {
         currentStatus: parent.currentStatus,
         currentLocation: parent.currentLocation,
-        totalAccumulatedRh: parent.totalAccumulatedRh,
+        totalAccumulatedRh: comp.totalAccumulatedRh,
         fittedAtMeRh: parent.fittedAtMeRh,
       };
     }

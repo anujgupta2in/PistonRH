@@ -23,9 +23,10 @@ export const valveComponents = pgTable(
     // overhaul-due status is computed from hours run SINCE this point.
     lastOverhaulRh: real("last_overhaul_rh"),
     // Child components (e.g. nozzles, springs) reference their parent valve here.
-    // A child's location/status/running-hours clock are inherited from the parent
-    // at query time (see resolveValveComponentState in the API) — only its own
-    // identity (componentType/condition/remarks) and thresholds are its own.
+    // A child's location/status and in-service fitting point are inherited from
+    // the parent at query time (see resolveValveComponentState in the API), but
+    // its accumulated LIFE hours (totalAccumulatedRh), thresholds, and identity
+    // are its own — a new nozzle on an old valve body starts from its own hours.
     parentComponentId: integer("parent_component_id").references((): AnyPgColumn => valveComponents.id, { onDelete: "set null" }),
     remarks: text("remarks"),
     createdAt: timestamp("created_at").notNull().defaultNow(),

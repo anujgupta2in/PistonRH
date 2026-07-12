@@ -193,7 +193,7 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
                       </SelectContent>
                     </Select>
                     <FormDescription className="text-xs">
-                      Choose the parent {label.toLowerCase()} if this is a nozzle, spring, or other sub-part — its location, status, and running hours will be inherited from the parent.
+                      Choose the parent {label.toLowerCase()} if this is a nozzle, spring, or other sub-part — it follows the parent's location and status and runs hours while the parent is in service, but keeps its own accumulated life hours.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -293,7 +293,7 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
                     </SelectContent>
                   </Select>
                   <FormDescription className="text-xs">
-                    Choose the parent {label.toLowerCase()} if this is a nozzle, spring, or other sub-part — its location, status, and running hours will be inherited from the parent.
+                    Choose the parent {label.toLowerCase()} if this is a nozzle, spring, or other sub-part — it follows the parent's location and status and runs hours while the parent is in service, but keeps its own accumulated life hours.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

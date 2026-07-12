@@ -130,6 +130,21 @@ router.post("/vessels/:vesselId/valves/:valveType/movements", async (req, res): 
       .set({ currentStatus: newStatus, currentLocation: toLocation, fittedAtMeRh: null, totalAccumulatedRh: newTotal })
       .where(and(eq(valveComponents.vesselId, vesselId), eq(valveComponents.valveType, valveType), eq(valveComponents.componentId, componentId)));
 
+    // Children (nozzle, spindle, etc.) ran the same hours while attached —
+    // bank those hours into each child's own life counter as well.
+    if (rhAdded > 0) {
+      const children = await db
+        .select()
+        .from(valveComponents)
+        .where(and(eq(valveComponents.vesselId, vesselId), eq(valveComponents.valveType, valveType), eq(valveComponents.parentComponentId, comp.id)));
+      for (const child of children) {
+        await db
+          .update(valveComponents)
+          .set({ totalAccumulatedRh: child.totalAccumulatedRh + rhAdded })
+          .where(eq(valveComponents.id, child.id));
+      }
+    }
+
     const parsed = parseCylSlot(fromLocation);
     if (parsed) {
       await db
