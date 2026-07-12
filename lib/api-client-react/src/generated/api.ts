@@ -488,29 +488,57 @@ export interface ValveComponentUpdate {
 }
 
 /**
- * A child component (nozzle, spring, etc.) nested under its parent valve; totalRh is inherited from the parent, limit/alertStatus use the child's own thresholds.
+ * Date of the last overhaul as YYYY-MM-DD
+ */
+export type ValveChildComponentStatusLastOverhaulDate = string | null;
+
+/**
+ * The component's own lifetime RH at its last overhaul
+ */
+export type ValveChildComponentStatusLastOverhaulRh = number | null;
+
+/**
+ * A child component (nozzle, spring, etc.) nested under its parent valve; it runs hours while the parent is in service but keeps its own accumulated life; limit/alertStatus use the child's own thresholds.
  */
 export interface ValveChildComponentStatus {
   componentId: string;
   componentType: string;
   condition: string;
-  /** Inherited from the parent valve's live RH */
+  /** The child's own life hours (since its last overhaul when one is recorded) */
   totalRh: number;
   /** This child's own overhaul threshold in hours */
   limit: number;
   alertStatus: string;
+  /** Date of the last overhaul as YYYY-MM-DD */
+  lastOverhaulDate?: ValveChildComponentStatusLastOverhaulDate;
+  /** The component's own lifetime RH at its last overhaul */
+  lastOverhaulRh?: ValveChildComponentStatusLastOverhaulRh;
 }
+
+/**
+ * Date of the last overhaul as YYYY-MM-DD
+ */
+export type ValveSlotStatusLastOverhaulDate = string | null;
+
+/**
+ * The component's own lifetime RH at its last overhaul
+ */
+export type ValveSlotStatusLastOverhaulRh = number | null;
 
 export interface ValveSlotStatus {
   slotNumber: number;
   componentId: string;
   componentType: string;
   condition: string;
-  /** Total lifetime running hours of the component */
+  /** Hours run since the component's last recorded overhaul (lifetime hours when none recorded) */
   totalRh: number;
   /** Overhaul threshold in hours for this valve type */
   limit: number;
   alertStatus: string;
+  /** Date of the last overhaul as YYYY-MM-DD */
+  lastOverhaulDate?: ValveSlotStatusLastOverhaulDate;
+  /** The component's own lifetime RH at its last overhaul */
+  lastOverhaulRh?: ValveSlotStatusLastOverhaulRh;
   children: ValveChildComponentStatus[];
 }
 

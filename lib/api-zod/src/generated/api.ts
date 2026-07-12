@@ -597,10 +597,12 @@ export const listValveComponentsResponseItem = zod.object({
   "componentId": zod.string(),
   "componentType": zod.string(),
   "condition": zod.string(),
-  "totalRh": zod.number().describe('Inherited from the parent valve\'s live RH'),
+  "totalRh": zod.number().describe('The child\'s own life hours (since its last overhaul when one is recorded)'),
   "limit": zod.number().describe('This child\'s own overhaul threshold in hours'),
-  "alertStatus": zod.string()
-}).describe('A child component (nozzle, spring, etc.) nested under its parent valve; totalRh is inherited from the parent, limit\/alertStatus use the child\'s own thresholds.')).optional(),
+  "alertStatus": zod.string(),
+  "lastOverhaulDate": zod.string().nullish().describe('Date of the last overhaul as YYYY-MM-DD'),
+  "lastOverhaulRh": zod.number().nullish().describe('The component\'s own lifetime RH at its last overhaul')
+}).describe('A child component (nozzle, spring, etc.) nested under its parent valve; it runs hours while the parent is in service but keeps its own accumulated life; limit\/alertStatus use the child\'s own thresholds.')).optional(),
   "createdAt": zod.string()
 })
 export const listValveComponentsResponse = zod.array(listValveComponentsResponseItem)
@@ -669,10 +671,12 @@ export const getValveComponentResponse = zod.object({
   "componentId": zod.string(),
   "componentType": zod.string(),
   "condition": zod.string(),
-  "totalRh": zod.number().describe('Inherited from the parent valve\'s live RH'),
+  "totalRh": zod.number().describe('The child\'s own life hours (since its last overhaul when one is recorded)'),
   "limit": zod.number().describe('This child\'s own overhaul threshold in hours'),
-  "alertStatus": zod.string()
-}).describe('A child component (nozzle, spring, etc.) nested under its parent valve; totalRh is inherited from the parent, limit\/alertStatus use the child\'s own thresholds.')).optional(),
+  "alertStatus": zod.string(),
+  "lastOverhaulDate": zod.string().nullish().describe('Date of the last overhaul as YYYY-MM-DD'),
+  "lastOverhaulRh": zod.number().nullish().describe('The component\'s own lifetime RH at its last overhaul')
+}).describe('A child component (nozzle, spring, etc.) nested under its parent valve; it runs hours while the parent is in service but keeps its own accumulated life; limit\/alertStatus use the child\'s own thresholds.')).optional(),
   "createdAt": zod.string()
 })
 
@@ -727,10 +731,12 @@ export const updateValveComponentResponse = zod.object({
   "componentId": zod.string(),
   "componentType": zod.string(),
   "condition": zod.string(),
-  "totalRh": zod.number().describe('Inherited from the parent valve\'s live RH'),
+  "totalRh": zod.number().describe('The child\'s own life hours (since its last overhaul when one is recorded)'),
   "limit": zod.number().describe('This child\'s own overhaul threshold in hours'),
-  "alertStatus": zod.string()
-}).describe('A child component (nozzle, spring, etc.) nested under its parent valve; totalRh is inherited from the parent, limit\/alertStatus use the child\'s own thresholds.')).optional(),
+  "alertStatus": zod.string(),
+  "lastOverhaulDate": zod.string().nullish().describe('Date of the last overhaul as YYYY-MM-DD'),
+  "lastOverhaulRh": zod.number().nullish().describe('The component\'s own lifetime RH at its last overhaul')
+}).describe('A child component (nozzle, spring, etc.) nested under its parent valve; it runs hours while the parent is in service but keeps its own accumulated life; limit\/alertStatus use the child\'s own thresholds.')).optional(),
   "createdAt": zod.string()
 })
 
@@ -765,17 +771,21 @@ export const getValveDashboardResponse = zod.object({
   "componentId": zod.string(),
   "componentType": zod.string(),
   "condition": zod.string(),
-  "totalRh": zod.number().describe('Total lifetime running hours of the component'),
+  "totalRh": zod.number().describe('Hours run since the component\'s last recorded overhaul (lifetime hours when none recorded)'),
   "limit": zod.number().describe('Overhaul threshold in hours for this valve type'),
   "alertStatus": zod.string(),
+  "lastOverhaulDate": zod.string().nullish().describe('Date of the last overhaul as YYYY-MM-DD'),
+  "lastOverhaulRh": zod.number().nullish().describe('The component\'s own lifetime RH at its last overhaul'),
   "children": zod.array(zod.object({
   "componentId": zod.string(),
   "componentType": zod.string(),
   "condition": zod.string(),
-  "totalRh": zod.number().describe('Inherited from the parent valve\'s live RH'),
+  "totalRh": zod.number().describe('The child\'s own life hours (since its last overhaul when one is recorded)'),
   "limit": zod.number().describe('This child\'s own overhaul threshold in hours'),
-  "alertStatus": zod.string()
-}).describe('A child component (nozzle, spring, etc.) nested under its parent valve; totalRh is inherited from the parent, limit\/alertStatus use the child\'s own thresholds.'))
+  "alertStatus": zod.string(),
+  "lastOverhaulDate": zod.string().nullish().describe('Date of the last overhaul as YYYY-MM-DD'),
+  "lastOverhaulRh": zod.number().nullish().describe('The component\'s own lifetime RH at its last overhaul')
+}).describe('A child component (nozzle, spring, etc.) nested under its parent valve; it runs hours while the parent is in service but keeps its own accumulated life; limit\/alertStatus use the child\'s own thresholds.'))
 })),
   "overallAlertStatus": zod.string().describe('Driven by the Unit\'s own overhaul cycle (rhSinceOverhaul vs. crownOverhaulRh) — the same crown-based clock shown on the piston dashboard, not the valve\'s own wear'),
   "rhSinceOverhaul": zod.number().describe('Hours run since this cylinder unit was last overhauled')
@@ -806,10 +816,12 @@ export const getValveDashboardResponse = zod.object({
   "componentId": zod.string(),
   "componentType": zod.string(),
   "condition": zod.string(),
-  "totalRh": zod.number().describe('Inherited from the parent valve\'s live RH'),
+  "totalRh": zod.number().describe('The child\'s own life hours (since its last overhaul when one is recorded)'),
   "limit": zod.number().describe('This child\'s own overhaul threshold in hours'),
-  "alertStatus": zod.string()
-}).describe('A child component (nozzle, spring, etc.) nested under its parent valve; totalRh is inherited from the parent, limit\/alertStatus use the child\'s own thresholds.')).optional(),
+  "alertStatus": zod.string(),
+  "lastOverhaulDate": zod.string().nullish().describe('Date of the last overhaul as YYYY-MM-DD'),
+  "lastOverhaulRh": zod.number().nullish().describe('The component\'s own lifetime RH at its last overhaul')
+}).describe('A child component (nozzle, spring, etc.) nested under its parent valve; it runs hours while the parent is in service but keeps its own accumulated life; limit\/alertStatus use the child\'s own thresholds.')).optional(),
   "createdAt": zod.string()
 })),
   "ashoreComponents": zod.array(zod.object({
@@ -838,10 +850,12 @@ export const getValveDashboardResponse = zod.object({
   "componentId": zod.string(),
   "componentType": zod.string(),
   "condition": zod.string(),
-  "totalRh": zod.number().describe('Inherited from the parent valve\'s live RH'),
+  "totalRh": zod.number().describe('The child\'s own life hours (since its last overhaul when one is recorded)'),
   "limit": zod.number().describe('This child\'s own overhaul threshold in hours'),
-  "alertStatus": zod.string()
-}).describe('A child component (nozzle, spring, etc.) nested under its parent valve; totalRh is inherited from the parent, limit\/alertStatus use the child\'s own thresholds.')).optional(),
+  "alertStatus": zod.string(),
+  "lastOverhaulDate": zod.string().nullish().describe('Date of the last overhaul as YYYY-MM-DD'),
+  "lastOverhaulRh": zod.number().nullish().describe('The component\'s own lifetime RH at its last overhaul')
+}).describe('A child component (nozzle, spring, etc.) nested under its parent valve; it runs hours while the parent is in service but keeps its own accumulated life; limit\/alertStatus use the child\'s own thresholds.')).optional(),
   "createdAt": zod.string()
 })),
   "alerts": zod.array(zod.object({

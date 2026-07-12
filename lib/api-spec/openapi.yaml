@@ -1679,7 +1679,7 @@ components:
     ValveChildComponentStatus:
       type: object
       required: [componentId, componentType, condition, totalRh, limit, alertStatus]
-      description: A child component (nozzle, spring, etc.) nested under its parent valve; totalRh is inherited from the parent, limit/alertStatus use the child's own thresholds.
+      description: A child component (nozzle, spring, etc.) nested under its parent valve; it runs hours while the parent is in service but keeps its own accumulated life; limit/alertStatus use the child's own thresholds.
       properties:
         componentId:
           type: string
@@ -1689,12 +1689,18 @@ components:
           type: string
         totalRh:
           type: number
-          description: Inherited from the parent valve's live RH
+          description: The child's own life hours (since its last overhaul when one is recorded)
         limit:
           type: number
           description: This child's own overhaul threshold in hours
         alertStatus:
           type: string
+        lastOverhaulDate:
+          type: ["string", "null"]
+          description: "Date of the last overhaul as YYYY-MM-DD"
+        lastOverhaulRh:
+          type: ["number", "null"]
+          description: "The component's own lifetime RH at its last overhaul"
 
     ValveSlotStatus:
       type: object
@@ -1710,12 +1716,18 @@ components:
           type: string
         totalRh:
           type: number
-          description: Total lifetime running hours of the component
+          description: Hours run since the component's last recorded overhaul (lifetime hours when none recorded)
         limit:
           type: number
           description: Overhaul threshold in hours for this valve type
         alertStatus:
           type: string
+        lastOverhaulDate:
+          type: ["string", "null"]
+          description: "Date of the last overhaul as YYYY-MM-DD"
+        lastOverhaulRh:
+          type: ["number", "null"]
+          description: "The component's own lifetime RH at its last overhaul"
         children:
           type: array
           items:

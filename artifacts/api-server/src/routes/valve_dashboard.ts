@@ -73,6 +73,8 @@ router.get("/vessels/:vesselId/valves/:valveType/dashboard", async (req, res): P
       totalRh: sinceOh,
       limit: effectiveOverhaulRh,
       alertStatus: getAlertStatus(sinceOh, effectiveOverhaulRh, effectiveWarningRh),
+      lastOverhaulDate: child.lastOverhaulDate,
+      lastOverhaulRh: child.lastOverhaulRh,
     };
   }
   function childrenOf(parentId: number) {
@@ -128,6 +130,8 @@ router.get("/vessels/:vesselId/valves/:valveType/dashboard", async (req, res): P
         totalRh: sinceOh,
         limit: effectiveOverhaulRh,
         alertStatus: getAlertStatus(sinceOh, effectiveOverhaulRh, effectiveWarningRh),
+        lastOverhaulDate: comp.lastOverhaulDate,
+        lastOverhaulRh: comp.lastOverhaulRh,
         children: childrenOf(comp.id),
       };
     }).filter((s): s is NonNullable<typeof s> => s !== null);
@@ -151,6 +155,8 @@ router.get("/vessels/:vesselId/valves/:valveType/dashboard", async (req, res): P
         totalRh: sinceOh,
         limit: effectiveOverhaulRh,
         alertStatus: getAlertStatus(sinceOh, effectiveOverhaulRh, effectiveWarningRh),
+        lastOverhaulDate: comp.lastOverhaulDate,
+        lastOverhaulRh: comp.lastOverhaulRh,
         children: childrenOf(comp.id),
       });
     }
