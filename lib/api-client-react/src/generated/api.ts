@@ -358,6 +358,11 @@ export type ValveComponentParentComponentId = number | null;
  */
 export type ValveComponentLastOverhaulDate = string | null;
 
+/**
+ * The component's own lifetime RH at its last overhaul; overhaul-due status counts hours since this point
+ */
+export type ValveComponentLastOverhaulRh = number | null;
+
 export type ValveComponentRemarks = string | null;
 
 export interface ValveComponent {
@@ -383,6 +388,10 @@ export interface ValveComponent {
   parentComponentId?: ValveComponentParentComponentId;
   /** Date of the last overhaul as YYYY-MM-DD */
   lastOverhaulDate?: ValveComponentLastOverhaulDate;
+  /** The component's own lifetime RH at its last overhaul; overhaul-due status counts hours since this point */
+  lastOverhaulRh?: ValveComponentLastOverhaulRh;
+  /** Live RH minus lastOverhaulRh (equals liveRh when no overhaul recorded) — the basis for alertStatus */
+  rhSinceOverhaul?: number;
   remarks?: ValveComponentRemarks;
   liveRh?: number;
   alertStatus?: string;
@@ -412,6 +421,11 @@ export type ValveComponentInputParentComponentId = number | null;
  */
 export type ValveComponentInputLastOverhaulDate = string | null;
 
+/**
+ * The component's own lifetime RH at its last overhaul
+ */
+export type ValveComponentInputLastOverhaulRh = number | null;
+
 export interface ValveComponentInput {
   /** @minLength 1 */
   componentId: string;
@@ -429,6 +443,8 @@ export interface ValveComponentInput {
   parentComponentId?: ValveComponentInputParentComponentId;
   /** Date of the last overhaul as YYYY-MM-DD */
   lastOverhaulDate?: ValveComponentInputLastOverhaulDate;
+  /** The component's own lifetime RH at its last overhaul */
+  lastOverhaulRh?: ValveComponentInputLastOverhaulRh;
   remarks?: string;
 }
 
@@ -448,6 +464,11 @@ export type ValveComponentUpdateParentComponentId = number | null;
  */
 export type ValveComponentUpdateLastOverhaulDate = string | null;
 
+/**
+ * The component's own lifetime RH at its last overhaul
+ */
+export type ValveComponentUpdateLastOverhaulRh = number | null;
+
 export interface ValveComponentUpdate {
   componentType?: string;
   condition?: string;
@@ -461,6 +482,8 @@ export interface ValveComponentUpdate {
   parentComponentId?: ValveComponentUpdateParentComponentId;
   /** Date of the last overhaul as YYYY-MM-DD */
   lastOverhaulDate?: ValveComponentUpdateLastOverhaulDate;
+  /** The component's own lifetime RH at its last overhaul */
+  lastOverhaulRh?: ValveComponentUpdateLastOverhaulRh;
   remarks?: string;
 }
 

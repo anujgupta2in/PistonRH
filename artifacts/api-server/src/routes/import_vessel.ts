@@ -62,6 +62,9 @@ interface ParsedComponent {
   // sheets) — applies to the valve component itself. Both YYYY-MM-DD or "".
   lastDecarbDate: string;
   lastOverhaulDate: string;
+  // "Last Overhaul RH" (valve sheets): the component's own RH at its last
+  // overhaul — the overhaul-due clock counts from here. null = not recorded.
+  lastOverhaulRh: number | null;
 }
 
 function parseComponentSheet(wb: XLSX.WorkBook, sheetName: string): ParsedComponent[] {
@@ -87,6 +90,7 @@ function parseComponentSheet(wb: XLSX.WorkBook, sheetName: string): ParsedCompon
   const parentCol  = colIdx("parent component id");
   const decarbCol  = colIdx("last decarb date");
   const lastOhCol  = colIdx("last overhaul date");
+  const lastOhRhCol = colIdx("last overhaul rh");
 
   const results: ParsedComponent[] = [];
   for (let i = 1; i < rawRows.length; i++) {
@@ -109,6 +113,7 @@ function parseComponentSheet(wb: XLSX.WorkBook, sheetName: string): ParsedCompon
       parentComponentId: parentCol >= 0 ? strVal(row[parentCol]) : "",
       lastDecarbDate:    decarbCol >= 0 ? dateVal(row[decarbCol]) : "",
       lastOverhaulDate:  lastOhCol >= 0 ? dateVal(row[lastOhCol]) : "",
+      lastOverhaulRh:    lastOhRhCol >= 0 && strVal(row[lastOhRhCol]) !== "" ? numVal(row[lastOhRhCol]) : null,
     });
   }
   return results;
@@ -361,6 +366,7 @@ router.post(
           remarks:            fv.remarks || null,
           parentComponentId:  parentDbId,
           lastOverhaulDate:   fv.lastOverhaulDate || null,
+          lastOverhaulRh:     fv.lastOverhaulRh,
         };
 
         if (existing) {
@@ -424,6 +430,7 @@ router.post(
           remarks:            ev.remarks || null,
           parentComponentId:  parentDbId,
           lastOverhaulDate:   ev.lastOverhaulDate || null,
+          lastOverhaulRh:     ev.lastOverhaulRh,
         };
 
         if (existing) {

@@ -43,6 +43,7 @@ const formSchema = z.object({
   warningRh: z.coerce.number().min(1).optional().nullable(),
   parentComponentId: z.coerce.number().optional().nullable(),
   lastOverhaulDate: z.string().optional(),
+  lastOverhaulRh: z.coerce.number().min(0).optional().nullable(),
   remarks: z.string().optional(),
 });
 
@@ -73,12 +74,12 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
 
   const addForm = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { componentId: "", componentType: "", condition: "New", currentStatus: "Onboard Spare", currentLocation: "", totalAccumulatedRh: 0, overhaulRh: null, warningRh: null, parentComponentId: null, lastOverhaulDate: "", remarks: "" },
+    defaultValues: { componentId: "", componentType: "", condition: "New", currentStatus: "Onboard Spare", currentLocation: "", totalAccumulatedRh: 0, overhaulRh: null, warningRh: null, parentComponentId: null, lastOverhaulDate: "", lastOverhaulRh: null, remarks: "" },
   });
 
   const editForm = useForm<EditValues>({
     resolver: zodResolver(editSchema),
-    defaultValues: { componentType: "", condition: "New", currentStatus: "Onboard Spare", currentLocation: "", totalAccumulatedRh: 0, overhaulRh: null, warningRh: null, parentComponentId: null, lastOverhaulDate: "", remarks: "" },
+    defaultValues: { componentType: "", condition: "New", currentStatus: "Onboard Spare", currentLocation: "", totalAccumulatedRh: 0, overhaulRh: null, warningRh: null, parentComponentId: null, lastOverhaulDate: "", lastOverhaulRh: null, remarks: "" },
   });
 
   // A top-level Fuel/Exhaust Valve's own threshold is its "Overhaul Interval";
@@ -90,7 +91,7 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
 
   const onAdd = (data: FormValues) => {
     createComp.mutate(
-      { vesselId: activeVesselId!, valveType, data: { componentId: data.componentId, componentType: data.componentType, condition: data.condition, currentStatus: data.currentStatus, currentLocation: data.currentLocation || data.currentStatus, totalAccumulatedRh: data.totalAccumulatedRh, overhaulRh: data.overhaulRh ?? undefined, warningRh: data.warningRh ?? undefined, parentComponentId: data.parentComponentId ?? undefined, lastOverhaulDate: data.lastOverhaulDate || null, remarks: data.remarks } },
+      { vesselId: activeVesselId!, valveType, data: { componentId: data.componentId, componentType: data.componentType, condition: data.condition, currentStatus: data.currentStatus, currentLocation: data.currentLocation || data.currentStatus, totalAccumulatedRh: data.totalAccumulatedRh, overhaulRh: data.overhaulRh ?? undefined, warningRh: data.warningRh ?? undefined, parentComponentId: data.parentComponentId ?? undefined, lastOverhaulDate: data.lastOverhaulDate || null, lastOverhaulRh: data.lastOverhaulRh ?? null, remarks: data.remarks } },
       {
         onSuccess: () => { toast({ title: `${label} component added` }); invalidate(); setIsAddOpen(false); addForm.reset(); },
         onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
@@ -101,7 +102,7 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
   const onEdit = (data: EditValues) => {
     if (!editingComp) return;
     updateComp.mutate(
-      { vesselId: activeVesselId!, valveType, componentId: editingComp.componentId, data: { componentType: data.componentType, condition: data.condition, currentStatus: data.currentStatus, currentLocation: data.currentLocation, totalAccumulatedRh: data.totalAccumulatedRh, overhaulRh: data.overhaulRh ?? undefined, warningRh: data.warningRh ?? undefined, parentComponentId: data.parentComponentId ?? null, lastOverhaulDate: data.lastOverhaulDate || null, remarks: data.remarks } },
+      { vesselId: activeVesselId!, valveType, componentId: editingComp.componentId, data: { componentType: data.componentType, condition: data.condition, currentStatus: data.currentStatus, currentLocation: data.currentLocation, totalAccumulatedRh: data.totalAccumulatedRh, overhaulRh: data.overhaulRh ?? undefined, warningRh: data.warningRh ?? undefined, parentComponentId: data.parentComponentId ?? null, lastOverhaulDate: data.lastOverhaulDate || null, lastOverhaulRh: data.lastOverhaulRh ?? null, remarks: data.remarks } },
       {
         onSuccess: () => { toast({ title: "Component updated" }); invalidate(); setEditingComp(null); },
         onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
@@ -121,7 +122,7 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
   };
 
   const openEdit = (comp: NonNullable<typeof comps>[number]) => {
-    editForm.reset({ componentType: comp.componentType, condition: comp.condition, currentStatus: comp.currentStatus, currentLocation: comp.currentLocation, totalAccumulatedRh: comp.totalAccumulatedRh, overhaulRh: comp.overhaulRh ?? null, warningRh: comp.warningRh ?? null, parentComponentId: comp.parentComponentId ?? null, lastOverhaulDate: comp.lastOverhaulDate ?? "", remarks: comp.remarks ?? "" });
+    editForm.reset({ componentType: comp.componentType, condition: comp.condition, currentStatus: comp.currentStatus, currentLocation: comp.currentLocation, totalAccumulatedRh: comp.totalAccumulatedRh, overhaulRh: comp.overhaulRh ?? null, warningRh: comp.warningRh ?? null, parentComponentId: comp.parentComponentId ?? null, lastOverhaulDate: comp.lastOverhaulDate ?? "", lastOverhaulRh: comp.lastOverhaulRh ?? null, remarks: comp.remarks ?? "" });
     setEditingComp({ componentId: comp.componentId });
   };
 
@@ -218,9 +219,20 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
                 <FormField control={addForm.control} name="totalAccumulatedRh" render={({ field }) => (
                   <FormItem><FormLabel>Accumulated RH (hrs)</FormLabel><FormControl><Input type="number" step="1" min={0} {...field} /></FormControl><FormDescription className="text-xs">Previously accumulated running hours before adding to this record.</FormDescription><FormMessage /></FormItem>
                 )} />
-                <FormField control={addForm.control} name="lastOverhaulDate" render={({ field }) => (
-                  <FormItem><FormLabel>Last Overhaul Date (optional)</FormLabel><FormControl><Input type="date" {...field} value={field.value ?? ""} /></FormControl><FormDescription className="text-xs">Date this component was last overhauled.</FormDescription><FormMessage /></FormItem>
-                )} />
+                <div className="border rounded-md p-3 space-y-2 bg-muted/20">
+                  <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Last Overhaul (optional)</p>
+                  <p className="text-xs text-muted-foreground">When set, the overhaul-due status counts hours run since this overhaul instead of lifetime hours.</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField control={addForm.control} name="lastOverhaulDate" render={({ field }) => (
+                      <FormItem><FormLabel>Overhaul Date</FormLabel><FormControl><Input type="date" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={addForm.control} name="lastOverhaulRh" render={({ field }) => (
+                      <FormItem><FormLabel>Overhauled at RH (hrs)</FormLabel><FormControl>
+                        <Input type="number" step="1" min={0} placeholder="Component RH at overhaul" value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value === "" ? null : Number(e.target.value))} />
+                      </FormControl><FormMessage /></FormItem>
+                    )} />
+                  </div>
+                </div>
                 <div className="border rounded-md p-3 space-y-2 bg-muted/20">
                   <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Individual Thresholds (optional)</p>
                   <p className="text-xs text-muted-foreground">Override vessel-level defaults for this component only.</p>
@@ -307,9 +319,20 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
               <FormField control={editForm.control} name="totalAccumulatedRh" render={({ field }) => (
                 <FormItem><FormLabel>Total Accumulated RH (hrs)</FormLabel><FormControl><Input type="number" step="1" min={0} {...field} /></FormControl><FormMessage /></FormItem>
               )} />
-              <FormField control={editForm.control} name="lastOverhaulDate" render={({ field }) => (
-                <FormItem><FormLabel>Last Overhaul Date (optional)</FormLabel><FormControl><Input type="date" {...field} value={field.value ?? ""} /></FormControl><FormDescription className="text-xs">Date this component was last overhauled.</FormDescription><FormMessage /></FormItem>
-              )} />
+              <div className="border rounded-md p-3 space-y-2 bg-muted/20">
+                <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Last Overhaul (optional)</p>
+                <p className="text-xs text-muted-foreground">When set, the overhaul-due status counts hours run since this overhaul instead of lifetime hours.</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <FormField control={editForm.control} name="lastOverhaulDate" render={({ field }) => (
+                    <FormItem><FormLabel>Overhaul Date</FormLabel><FormControl><Input type="date" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>
+                  )} />
+                  <FormField control={editForm.control} name="lastOverhaulRh" render={({ field }) => (
+                    <FormItem><FormLabel>Overhauled at RH (hrs)</FormLabel><FormControl>
+                      <Input type="number" step="1" min={0} placeholder="Component RH at overhaul" value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value === "" ? null : Number(e.target.value))} />
+                    </FormControl><FormMessage /></FormItem>
+                  )} />
+                </div>
+              </div>
               <div className="border rounded-md p-3 space-y-2 bg-muted/20">
                 <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Individual Thresholds (optional)</p>
                 <p className="text-xs text-muted-foreground">Override vessel-level defaults for this component only.</p>
@@ -367,8 +390,18 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
                         <div className="text-xs text-muted-foreground">{comp.currentLocation}</div>
                       )}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{comp.lastOverhaulDate ?? "—"}</TableCell>
-                    <TableCell className="text-right font-mono font-medium">{(comp.liveRh ?? comp.totalAccumulatedRh).toLocaleString()}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {comp.lastOverhaulDate ?? "—"}
+                      {comp.lastOverhaulRh != null && (
+                        <div className="text-xs">at {comp.lastOverhaulRh.toLocaleString()} hr</div>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right font-mono font-medium">
+                      {(comp.liveRh ?? comp.totalAccumulatedRh).toLocaleString()}
+                      {comp.lastOverhaulRh != null && comp.rhSinceOverhaul != null && (
+                        <div className="text-xs text-muted-foreground font-normal">{comp.rhSinceOverhaul.toLocaleString()} since O/H</div>
+                      )}
+                    </TableCell>
                     <TableCell><StatusBadge status={comp.alertStatus ?? "OK"} label={getStatusLabel(comp.alertStatus ?? "OK", "overhaul")} /></TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
@@ -394,8 +427,18 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
                       <TableCell>
                         <div className="text-xs text-muted-foreground">Inherited from {comp.componentId}</div>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{child.lastOverhaulDate ?? "—"}</TableCell>
-                      <TableCell className="text-right font-mono font-medium">{(child.liveRh ?? child.totalAccumulatedRh).toLocaleString()}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {child.lastOverhaulDate ?? "—"}
+                        {child.lastOverhaulRh != null && (
+                          <div className="text-xs">at {child.lastOverhaulRh.toLocaleString()} hr</div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right font-mono font-medium">
+                        {(child.liveRh ?? child.totalAccumulatedRh).toLocaleString()}
+                        {child.lastOverhaulRh != null && child.rhSinceOverhaul != null && (
+                          <div className="text-xs text-muted-foreground font-normal">{child.rhSinceOverhaul.toLocaleString()} since O/H</div>
+                        )}
+                      </TableCell>
                       <TableCell><StatusBadge status={child.alertStatus ?? "OK"} label={getStatusLabel(child.alertStatus ?? "OK", "life")} /></TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">

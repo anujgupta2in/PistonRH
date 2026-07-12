@@ -1587,6 +1587,12 @@ components:
         lastOverhaulDate:
           type: ["string", "null"]
           description: "Date of the last overhaul as YYYY-MM-DD"
+        lastOverhaulRh:
+          type: ["number", "null"]
+          description: "The component's own lifetime RH at its last overhaul; overhaul-due status counts hours since this point"
+        rhSinceOverhaul:
+          type: number
+          description: "Live RH minus lastOverhaulRh (equals liveRh when no overhaul recorded) — the basis for alertStatus"
         remarks:
           type: ["string", "null"]
         liveRh:
@@ -1632,6 +1638,9 @@ components:
         lastOverhaulDate:
           type: ["string", "null"]
           description: "Date of the last overhaul as YYYY-MM-DD"
+        lastOverhaulRh:
+          type: ["number", "null"]
+          description: "The component's own lifetime RH at its last overhaul"
         remarks:
           type: string
 
@@ -1660,6 +1669,9 @@ components:
         lastOverhaulDate:
           type: ["string", "null"]
           description: "Date of the last overhaul as YYYY-MM-DD"
+        lastOverhaulRh:
+          type: ["number", "null"]
+          description: "The component's own lifetime RH at its last overhaul"
         remarks:
           type: string
 

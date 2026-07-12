@@ -58,6 +58,8 @@ function toDto(
   const effectiveWarningRh = c.warningRh ?? typeThresh?.warningRh ?? warningRh;
   const state = resolveValveComponentState(c, byId);
   const liveRh = computeComponentLiveRh(state.totalAccumulatedRh, state.currentStatus, state.fittedAtMeRh, currentMeRh);
+  // Once an overhaul is recorded, the overhaul-due clock restarts from it
+  const rhSinceOverhaul = Math.max(0, liveRh - (c.lastOverhaulRh ?? 0));
   return {
     id: c.id,
     componentId: c.componentId,
@@ -73,11 +75,13 @@ function toDto(
     warningRh: c.warningRh,
     parentComponentId: c.parentComponentId,
     lastOverhaulDate: c.lastOverhaulDate,
+    lastOverhaulRh: c.lastOverhaulRh,
+    rhSinceOverhaul: Math.round(rhSinceOverhaul),
     effectiveOverhaulRh,
     effectiveWarningRh,
     remarks: c.remarks,
     liveRh: Math.round(liveRh),
-    alertStatus: getAlertStatus(liveRh, effectiveOverhaulRh, effectiveWarningRh),
+    alertStatus: getAlertStatus(rhSinceOverhaul, effectiveOverhaulRh, effectiveWarningRh),
     createdAt: c.createdAt.toISOString(),
   };
 }
@@ -110,7 +114,7 @@ router.post("/vessels/:vesselId/valves/:valveType/components", async (req, res):
     res.status(400).json({ error: "Invalid params" });
     return;
   }
-  const { componentId, componentType, condition, currentStatus, currentLocation, totalAccumulatedRh, fittedAtMeRh, remarks, parentComponentId, lastOverhaulDate } = req.body;
+  const { componentId, componentType, condition, currentStatus, currentLocation, totalAccumulatedRh, fittedAtMeRh, remarks, parentComponentId, lastOverhaulDate, lastOverhaulRh } = req.body;
   if (!componentId || !componentType || !condition || !currentStatus) {
     res.status(400).json({ error: "componentId, componentType, condition, currentStatus are required" });
     return;
@@ -154,6 +158,7 @@ router.post("/vessels/:vesselId/valves/:valveType/components", async (req, res):
       warningRh: compWarningRh ?? null,
       parentComponentId: parentComponentId ?? null,
       lastOverhaulDate: lastOverhaulDate ?? null,
+      lastOverhaulRh: lastOverhaulRh ?? null,
       remarks: remarks ?? null,
     })
     .returning();
@@ -199,6 +204,7 @@ router.patch("/vessels/:vesselId/valves/:valveType/components/:componentId", asy
   if ("overhaulRh" in b) updates.overhaulRh = b.overhaulRh;
   if ("warningRh" in b) updates.warningRh = b.warningRh;
   if ("lastOverhaulDate" in b) updates.lastOverhaulDate = b.lastOverhaulDate;
+  if ("lastOverhaulRh" in b) updates.lastOverhaulRh = b.lastOverhaulRh;
   if ("remarks" in b) updates.remarks = b.remarks;
 
   if ("parentComponentId" in b) {

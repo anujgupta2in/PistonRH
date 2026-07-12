@@ -19,6 +19,9 @@ export const valveComponents = pgTable(
     overhaulRh: integer("overhaul_rh"),
     warningRh: integer("warning_rh"),
     lastOverhaulDate: text("last_overhaul_date"), // ISO date string: YYYY-MM-DD
+    // The component's own lifetime RH at its last overhaul; when set, the
+    // overhaul-due status is computed from hours run SINCE this point.
+    lastOverhaulRh: real("last_overhaul_rh"),
     // Child components (e.g. nozzles, springs) reference their parent valve here.
     // A child's location/status/running-hours clock are inherited from the parent
     // at query time (see resolveValveComponentState in the API) — only its own

@@ -55,17 +55,24 @@ router.get("/vessels/:vesselId/valves/:valveType/dashboard", async (req, res): P
 
   // Children (nozzles, springs, etc.) have no slot of their own — they inherit
   // location/status/RH clock from their parent and are nested under it here.
+  // Once an overhaul is recorded on a component, its overhaul-due clock
+  // restarts from that point — totalRh shown is hours run since then.
+  function sinceOverhaul(liveRh: number, lastOverhaulRh: number | null) {
+    return Math.round(Math.max(0, liveRh - (lastOverhaulRh ?? 0)));
+  }
+
   function childDto(child: typeof allComps[0]) {
     const { overhaulRh: effectiveOverhaulRh, warningRh: effectiveWarningRh } = resolveThresh(child);
     const state = resolveValveComponentState(child, byId);
     const liveRh = Math.round(computeComponentLiveRh(state.totalAccumulatedRh, state.currentStatus, state.fittedAtMeRh, currentMeRh));
+    const sinceOh = sinceOverhaul(liveRh, child.lastOverhaulRh);
     return {
       componentId: child.componentId,
       componentType: child.componentType,
       condition: child.condition,
-      totalRh: liveRh,
+      totalRh: sinceOh,
       limit: effectiveOverhaulRh,
-      alertStatus: getAlertStatus(liveRh, effectiveOverhaulRh, effectiveWarningRh),
+      alertStatus: getAlertStatus(sinceOh, effectiveOverhaulRh, effectiveWarningRh),
     };
   }
   function childrenOf(parentId: number) {
@@ -76,6 +83,7 @@ router.get("/vessels/:vesselId/valves/:valveType/dashboard", async (req, res): P
     const { overhaulRh, warningRh } = resolveThresh(c);
     const state = resolveValveComponentState(c, byId);
     const liveRh = computeComponentLiveRh(state.totalAccumulatedRh, state.currentStatus, state.fittedAtMeRh, currentMeRh);
+    const sinceOh = sinceOverhaul(liveRh, c.lastOverhaulRh);
     return {
       id: c.id,
       componentId: c.componentId,
@@ -90,7 +98,7 @@ router.get("/vessels/:vesselId/valves/:valveType/dashboard", async (req, res): P
       parentComponentId: c.parentComponentId,
       remarks: c.remarks,
       liveRh: Math.round(liveRh),
-      alertStatus: getAlertStatus(liveRh, overhaulRh, warningRh),
+      alertStatus: getAlertStatus(sinceOh, overhaulRh, warningRh),
       children: c.parentComponentId == null ? childrenOf(c.id) : [],
       createdAt: c.createdAt.toISOString(),
     };
@@ -111,14 +119,15 @@ router.get("/vessels/:vesselId/valves/:valveType/dashboard", async (req, res): P
 
       const { overhaulRh: effectiveOverhaulRh, warningRh: effectiveWarningRh } = resolveThresh(comp);
       const liveRh = Math.round(computeComponentLiveRh(comp.totalAccumulatedRh, comp.currentStatus, comp.fittedAtMeRh, currentMeRh));
+      const sinceOh = sinceOverhaul(liveRh, comp.lastOverhaulRh);
       return {
         slotNumber: slotNum,
         componentId: comp.componentId,
         componentType: comp.componentType,
         condition: comp.condition,
-        totalRh: liveRh,
+        totalRh: sinceOh,
         limit: effectiveOverhaulRh,
-        alertStatus: getAlertStatus(liveRh, effectiveOverhaulRh, effectiveWarningRh),
+        alertStatus: getAlertStatus(sinceOh, effectiveOverhaulRh, effectiveWarningRh),
         children: childrenOf(comp.id),
       };
     }).filter((s): s is NonNullable<typeof s> => s !== null);
@@ -133,14 +142,15 @@ router.get("/vessels/:vesselId/valves/:valveType/dashboard", async (req, res): P
       if (slots.some((s) => s.componentId === comp.componentId)) continue;
       const { overhaulRh: effectiveOverhaulRh, warningRh: effectiveWarningRh } = resolveThresh(comp);
       const liveRh = Math.round(computeComponentLiveRh(comp.totalAccumulatedRh, comp.currentStatus, comp.fittedAtMeRh, currentMeRh));
+      const sinceOh = sinceOverhaul(liveRh, comp.lastOverhaulRh);
       slots.push({
         slotNumber: slots.length + 1,
         componentId: comp.componentId,
         componentType: comp.componentType,
         condition: comp.condition,
-        totalRh: liveRh,
+        totalRh: sinceOh,
         limit: effectiveOverhaulRh,
-        alertStatus: getAlertStatus(liveRh, effectiveOverhaulRh, effectiveWarningRh),
+        alertStatus: getAlertStatus(sinceOh, effectiveOverhaulRh, effectiveWarningRh),
         children: childrenOf(comp.id),
       });
     }
