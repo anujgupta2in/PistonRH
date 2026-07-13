@@ -25,6 +25,8 @@ import { Loader2, Printer, Download, CornerDownRight } from "lucide-react";
 import { Fragment } from "react";
 import { Button } from "@/components/ui/button";
 import { getStatusLabel } from "@/lib/utils";
+import * as XLSX from "xlsx";
+import { useGetVessel, getGetVesselQueryKey } from "@workspace/api-client-react";
 
 // Never let one malformed date (e.g. from a bad import) crash the whole page
 function safeFormatDate(iso: string, fmt: string): string {
@@ -123,6 +125,7 @@ function ValveCylinderStatusCard({ title, description, data }: {
 export default function Reports() {
   const { activeVesselId } = useVesselContext();
 
+  const { data: vessel } = useGetVessel(activeVesselId!, { query: { enabled: !!activeVesselId, queryKey: getGetVesselQueryKey(activeVesselId ?? 0) } });
   const { data: dashboard, isLoading: dashLoading } = useGetDashboard(activeVesselId!, { query: { enabled: !!activeVesselId, queryKey: getGetDashboardQueryKey(activeVesselId ?? 0) } });
   const { data: rhLogs, isLoading: rhLoading } = useListMonthlyRh(activeVesselId!, { query: { enabled: !!activeVesselId, queryKey: getListMonthlyRhQueryKey(activeVesselId ?? 0) } });
   const { data: components, isLoading: compLoading } = useListComponents(activeVesselId!, { query: { enabled: !!activeVesselId, queryKey: getListComponentsQueryKey(activeVesselId ?? 0) } });
@@ -142,6 +145,88 @@ export default function Reports() {
   const fuelSpares = fuelComps?.filter(c => c.currentStatus !== "In Service") ?? [];
   const exhaustSpares = exhaustComps?.filter(c => c.currentStatus !== "In Service") ?? [];
 
+  const handleExportExcel = () => {
+    const wb = XLSX.utils.book_new();
+    const addSheet = (name: string, rows: Record<string, unknown>[], widths: number[]) => {
+      const ws = XLSX.utils.json_to_sheet(rows.length > 0 ? rows : [{ Note: "No data" }]);
+      ws["!cols"] = widths.map((wch) => ({ wch }));
+      XLSX.utils.book_append_sheet(wb, ws, name);
+    };
+
+    // Cylinder Status (pistons)
+    addSheet("Cylinder Status", (dashboard?.cylinderStatus ?? []).flatMap(cyl =>
+      cyl.components.map(comp => ({
+        Unit: cyl.cylinder,
+        "Component ID": comp.componentId,
+        Type: comp.componentType,
+        Condition: comp.condition,
+        "Total RH": comp.totalRh,
+        "Expected Life (hrs)": comp.limit,
+        "Life Left (hrs)": comp.limit - comp.totalRh,
+        Status: getStatusLabel(comp.alertStatus, "life"),
+      }))
+    ), [6, 16, 18, 12, 10, 16, 14, 14]);
+
+    // Fuel / Exhaust valve status incl. children and overhaul info
+    const valveRows = (data: typeof fuelDashboard) => (data?.cylinderStatus ?? []).flatMap(cyl =>
+      cyl.slots.flatMap(slot => [
+        {
+          Unit: cyl.cylinder,
+          Slot: slot.slotNumber,
+          "Component ID": slot.componentId,
+          Type: slot.componentType,
+          Condition: slot.condition,
+          "RH Since O/H": slot.totalRh,
+          "Threshold (hrs)": slot.limit,
+          "Life Left (hrs)": slot.limit - slot.totalRh,
+          "Last O/H Date": slot.lastOverhaulDate ?? "",
+          "Last O/H ME RH": slot.lastOverhaulRh ?? "",
+          Status: getStatusLabel(slot.alertStatus, "overhaul"),
+        },
+        ...slot.children.map(child => ({
+          Unit: cyl.cylinder,
+          Slot: "",
+          "Component ID": `  > ${child.componentId}`,
+          Type: child.componentType,
+          Condition: child.condition,
+          "RH Since O/H": child.totalRh,
+          "Threshold (hrs)": child.limit,
+          "Life Left (hrs)": child.limit - child.totalRh,
+          "Last O/H Date": child.lastOverhaulDate ?? "",
+          "Last O/H ME RH": child.lastOverhaulRh ?? "",
+          Status: getStatusLabel(child.alertStatus, "life"),
+        })),
+      ])
+    );
+    addSheet("Fuel Valves", valveRows(fuelDashboard), [6, 6, 18, 22, 12, 13, 14, 14, 13, 14, 14]);
+    addSheet("Exhaust Valves", valveRows(exhaustDashboard), [6, 6, 18, 22, 12, 13, 14, 14, 13, 14, 14]);
+
+    // Monthly RH history
+    addSheet("Monthly RH", (rhLogs ?? []).map(log => ({
+      Date: log.logDate,
+      "ME Total RH": log.meTotalRh,
+      "Since Last (+hrs)": log.monthlyRh,
+      Remarks: log.remarks ?? "",
+    })), [12, 12, 16, 40]);
+
+    // Spares inventory (all categories)
+    addSheet("Spares", [
+      ...pistonSpares.map(c => ({ Category: "Piston", "Component ID": c.componentId, Type: c.componentType, Condition: c.condition, Status: c.currentStatus, Location: c.currentLocation ?? "", "Accumulated RH": c.totalAccumulatedRh })),
+      ...fuelSpares.map(c => ({ Category: "Fuel Valve", "Component ID": c.componentId, Type: c.componentType, Condition: c.condition, Status: c.currentStatus, Location: c.currentLocation ?? "", "Accumulated RH": c.totalAccumulatedRh })),
+      ...exhaustSpares.map(c => ({ Category: "Exhaust Valve", "Component ID": c.componentId, Type: c.componentType, Condition: c.condition, Status: c.currentStatus, Location: c.currentLocation ?? "", "Accumulated RH": c.totalAccumulatedRh })),
+    ], [14, 16, 24, 12, 20, 20, 14]);
+
+    // Movement history (all categories)
+    addSheet("Movements", [
+      ...(movements ?? []).map(m => ({ Category: "Piston", Date: m.movementDate, Action: m.action, "Component ID": m.componentId, From: m.fromLocation, To: m.toLocation, "ME RH": m.meRh, "RH Added": m.rhAdded ?? "" })),
+      ...(fuelMovs ?? []).map(m => ({ Category: "Fuel Valve", Date: m.movementDate, Action: m.action, "Component ID": m.componentId, From: m.fromLocation, To: m.toLocation, "ME RH": m.meRh, "RH Added": m.rhAdded })),
+      ...(exhaustMovs ?? []).map(m => ({ Category: "Exhaust Valve", Date: m.movementDate, Action: m.action, "Component ID": m.componentId, From: m.fromLocation, To: m.toLocation, "ME RH": m.meRh, "RH Added": m.rhAdded })),
+    ], [14, 12, 12, 16, 20, 20, 10, 10]);
+
+    const vesselTag = (vessel?.vesselName ?? "vessel").replace(/[^A-Za-z0-9]+/g, "_");
+    XLSX.writeFile(wb, `PistonRH_Report_${vesselTag}_${format(new Date(), "yyyy-MM-dd")}.xlsx`);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -153,8 +238,8 @@ export default function Reports() {
           <Button variant="outline" onClick={() => window.print()}>
             <Printer className="mr-2 h-4 w-4" /> Print View
           </Button>
-          <Button variant="outline" disabled>
-            <Download className="mr-2 h-4 w-4" /> Export CSV
+          <Button variant="outline" onClick={handleExportExcel}>
+            <Download className="mr-2 h-4 w-4" /> Export Excel
           </Button>
         </div>
       </div>
