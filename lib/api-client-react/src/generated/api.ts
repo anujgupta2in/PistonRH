@@ -359,7 +359,7 @@ export type ValveComponentParentComponentId = number | null;
 export type ValveComponentLastOverhaulDate = string | null;
 
 /**
- * The component's own lifetime RH at its last overhaul; overhaul-due status counts hours since this point
+ * Main engine total RH at this component's last overhaul; overhaul-due status counts ME hours run since this point
  */
 export type ValveComponentLastOverhaulRh = number | null;
 
@@ -388,9 +388,9 @@ export interface ValveComponent {
   parentComponentId?: ValveComponentParentComponentId;
   /** Date of the last overhaul as YYYY-MM-DD */
   lastOverhaulDate?: ValveComponentLastOverhaulDate;
-  /** The component's own lifetime RH at its last overhaul; overhaul-due status counts hours since this point */
+  /** Main engine total RH at this component's last overhaul; overhaul-due status counts ME hours run since this point */
   lastOverhaulRh?: ValveComponentLastOverhaulRh;
-  /** Live RH minus lastOverhaulRh (equals liveRh when no overhaul recorded) — the basis for alertStatus */
+  /** Current ME RH minus lastOverhaulRh (equals liveRh when no overhaul recorded) — the basis for alertStatus */
   rhSinceOverhaul?: number;
   remarks?: ValveComponentRemarks;
   liveRh?: number;
@@ -422,7 +422,7 @@ export type ValveComponentInputParentComponentId = number | null;
 export type ValveComponentInputLastOverhaulDate = string | null;
 
 /**
- * The component's own lifetime RH at its last overhaul
+ * Main engine total RH at this component's last overhaul
  */
 export type ValveComponentInputLastOverhaulRh = number | null;
 
@@ -443,7 +443,7 @@ export interface ValveComponentInput {
   parentComponentId?: ValveComponentInputParentComponentId;
   /** Date of the last overhaul as YYYY-MM-DD */
   lastOverhaulDate?: ValveComponentInputLastOverhaulDate;
-  /** The component's own lifetime RH at its last overhaul */
+  /** Main engine total RH at this component's last overhaul */
   lastOverhaulRh?: ValveComponentInputLastOverhaulRh;
   remarks?: string;
 }
@@ -465,7 +465,7 @@ export type ValveComponentUpdateParentComponentId = number | null;
 export type ValveComponentUpdateLastOverhaulDate = string | null;
 
 /**
- * The component's own lifetime RH at its last overhaul
+ * Main engine total RH at this component's last overhaul
  */
 export type ValveComponentUpdateLastOverhaulRh = number | null;
 
@@ -482,7 +482,7 @@ export interface ValveComponentUpdate {
   parentComponentId?: ValveComponentUpdateParentComponentId;
   /** Date of the last overhaul as YYYY-MM-DD */
   lastOverhaulDate?: ValveComponentUpdateLastOverhaulDate;
-  /** The component's own lifetime RH at its last overhaul */
+  /** Main engine total RH at this component's last overhaul */
   lastOverhaulRh?: ValveComponentUpdateLastOverhaulRh;
   remarks?: string;
 }
@@ -493,7 +493,7 @@ export interface ValveComponentUpdate {
 export type ValveChildComponentStatusLastOverhaulDate = string | null;
 
 /**
- * The component's own lifetime RH at its last overhaul
+ * Main engine total RH at this component's last overhaul
  */
 export type ValveChildComponentStatusLastOverhaulRh = number | null;
 
@@ -511,7 +511,7 @@ export interface ValveChildComponentStatus {
   alertStatus: string;
   /** Date of the last overhaul as YYYY-MM-DD */
   lastOverhaulDate?: ValveChildComponentStatusLastOverhaulDate;
-  /** The component's own lifetime RH at its last overhaul */
+  /** Main engine total RH at this component's last overhaul */
   lastOverhaulRh?: ValveChildComponentStatusLastOverhaulRh;
 }
 
@@ -521,7 +521,7 @@ export interface ValveChildComponentStatus {
 export type ValveSlotStatusLastOverhaulDate = string | null;
 
 /**
- * The component's own lifetime RH at its last overhaul
+ * Main engine total RH at this component's last overhaul
  */
 export type ValveSlotStatusLastOverhaulRh = number | null;
 
@@ -537,7 +537,7 @@ export interface ValveSlotStatus {
   alertStatus: string;
   /** Date of the last overhaul as YYYY-MM-DD */
   lastOverhaulDate?: ValveSlotStatusLastOverhaulDate;
-  /** The component's own lifetime RH at its last overhaul */
+  /** Main engine total RH at this component's last overhaul */
   lastOverhaulRh?: ValveSlotStatusLastOverhaulRh;
   children: ValveChildComponentStatus[];
 }

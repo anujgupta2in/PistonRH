@@ -58,8 +58,10 @@ function toDto(
   const effectiveWarningRh = c.warningRh ?? typeThresh?.warningRh ?? warningRh;
   const state = resolveValveComponentState(c, byId);
   const liveRh = computeComponentLiveRh(state.totalAccumulatedRh, state.currentStatus, state.fittedAtMeRh, currentMeRh);
-  // Once an overhaul is recorded, the overhaul-due clock restarts from it
-  const rhSinceOverhaul = Math.max(0, liveRh - (c.lastOverhaulRh ?? 0));
+  // lastOverhaulRh is the MAIN ENGINE RH at the component's last overhaul —
+  // hours since overhaul = current ME RH minus that baseline (falls back to
+  // the component's lifetime hours when no overhaul has been recorded).
+  const rhSinceOverhaul = c.lastOverhaulRh != null ? Math.max(0, currentMeRh - c.lastOverhaulRh) : liveRh;
   return {
     id: c.id,
     componentId: c.componentId,

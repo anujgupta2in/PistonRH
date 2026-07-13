@@ -128,7 +128,7 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
 
   if (isLoading) return <div className="flex justify-center p-8"><Loader2 className="animate-spin text-primary" /></div>;
 
-  const fuelTypes = ["Fuel Injector", "Fuel Valve", "Fuel Nozzle", "Fuel Atomizer"];
+  const fuelTypes = ["Fuel Injector", "Fuel Valve", "Fuel Valve Body", "Fuel Valve Spindle/Guide", "Fuel Nozzle", "Fuel Atomizer"];
   const exhaustTypes = ["Exhaust Valve", "Exhaust Valve Spindle", "Exhaust Valve Seat", "Exhaust Valve Cage"];
   const suggestedTypes = valveType === "fuel" ? fuelTypes : exhaustTypes;
 
@@ -221,14 +221,14 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
                 )} />
                 <div className="border rounded-md p-3 space-y-2 bg-muted/20">
                   <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Last Overhaul (optional)</p>
-                  <p className="text-xs text-muted-foreground">When set, the overhaul-due status counts hours run since this overhaul instead of lifetime hours.</p>
+                  <p className="text-xs text-muted-foreground">Enter the date and the Main Engine RH at which this component was last overhauled — the overhaul-due status then counts ME hours run since that point.</p>
                   <div className="grid grid-cols-2 gap-3">
                     <FormField control={addForm.control} name="lastOverhaulDate" render={({ field }) => (
                       <FormItem><FormLabel>Overhaul Date</FormLabel><FormControl><Input type="date" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={addForm.control} name="lastOverhaulRh" render={({ field }) => (
-                      <FormItem><FormLabel>Overhauled at RH (hrs)</FormLabel><FormControl>
-                        <Input type="number" step="1" min={0} placeholder="Component RH at overhaul" value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value === "" ? null : Number(e.target.value))} />
+                      <FormItem><FormLabel>Overhauled at ME RH (hrs)</FormLabel><FormControl>
+                        <Input type="number" step="1" min={0} placeholder="ME RH at overhaul" value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value === "" ? null : Number(e.target.value))} />
                       </FormControl><FormMessage /></FormItem>
                     )} />
                   </div>
@@ -321,14 +321,14 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
               )} />
               <div className="border rounded-md p-3 space-y-2 bg-muted/20">
                 <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Last Overhaul (optional)</p>
-                <p className="text-xs text-muted-foreground">When set, the overhaul-due status counts hours run since this overhaul instead of lifetime hours.</p>
+                <p className="text-xs text-muted-foreground">Enter the date and the Main Engine RH at which this component was last overhauled — the overhaul-due status then counts ME hours run since that point.</p>
                 <div className="grid grid-cols-2 gap-3">
                   <FormField control={editForm.control} name="lastOverhaulDate" render={({ field }) => (
                     <FormItem><FormLabel>Overhaul Date</FormLabel><FormControl><Input type="date" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={editForm.control} name="lastOverhaulRh" render={({ field }) => (
-                    <FormItem><FormLabel>Overhauled at RH (hrs)</FormLabel><FormControl>
-                      <Input type="number" step="1" min={0} placeholder="Component RH at overhaul" value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value === "" ? null : Number(e.target.value))} />
+                    <FormItem><FormLabel>Overhauled at ME RH (hrs)</FormLabel><FormControl>
+                      <Input type="number" step="1" min={0} placeholder="ME RH at overhaul" value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value === "" ? null : Number(e.target.value))} />
                     </FormControl><FormMessage /></FormItem>
                   )} />
                 </div>
@@ -393,7 +393,7 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
                     <TableCell className="text-sm text-muted-foreground">
                       {comp.lastOverhaulDate ?? "—"}
                       {comp.lastOverhaulRh != null && (
-                        <div className="text-xs">at {comp.lastOverhaulRh.toLocaleString()} hr</div>
+                        <div className="text-xs">at ME {comp.lastOverhaulRh.toLocaleString()} hr</div>
                       )}
                     </TableCell>
                     <TableCell className="text-right font-mono font-medium">
@@ -430,7 +430,7 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
                       <TableCell className="text-sm text-muted-foreground">
                         {child.lastOverhaulDate ?? "—"}
                         {child.lastOverhaulRh != null && (
-                          <div className="text-xs">at {child.lastOverhaulRh.toLocaleString()} hr</div>
+                          <div className="text-xs">at ME {child.lastOverhaulRh.toLocaleString()} hr</div>
                         )}
                       </TableCell>
                       <TableCell className="text-right font-mono font-medium">

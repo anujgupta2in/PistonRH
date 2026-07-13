@@ -1589,10 +1589,10 @@ components:
           description: "Date of the last overhaul as YYYY-MM-DD"
         lastOverhaulRh:
           type: ["number", "null"]
-          description: "The component's own lifetime RH at its last overhaul; overhaul-due status counts hours since this point"
+          description: "Main engine total RH at this component's last overhaul; overhaul-due status counts ME hours run since this point"
         rhSinceOverhaul:
           type: number
-          description: "Live RH minus lastOverhaulRh (equals liveRh when no overhaul recorded) — the basis for alertStatus"
+          description: "Current ME RH minus lastOverhaulRh (equals liveRh when no overhaul recorded) — the basis for alertStatus"
         remarks:
           type: ["string", "null"]
         liveRh:
@@ -1640,7 +1640,7 @@ components:
           description: "Date of the last overhaul as YYYY-MM-DD"
         lastOverhaulRh:
           type: ["number", "null"]
-          description: "The component's own lifetime RH at its last overhaul"
+          description: "Main engine total RH at this component's last overhaul"
         remarks:
           type: string
 
@@ -1671,7 +1671,7 @@ components:
           description: "Date of the last overhaul as YYYY-MM-DD"
         lastOverhaulRh:
           type: ["number", "null"]
-          description: "The component's own lifetime RH at its last overhaul"
+          description: "Main engine total RH at this component's last overhaul"
         remarks:
           type: string
 
@@ -1700,7 +1700,7 @@ components:
           description: "Date of the last overhaul as YYYY-MM-DD"
         lastOverhaulRh:
           type: ["number", "null"]
-          description: "The component's own lifetime RH at its last overhaul"
+          description: "Main engine total RH at this component's last overhaul"
 
     ValveSlotStatus:
       type: object
@@ -1727,7 +1727,7 @@ components:
           description: "Date of the last overhaul as YYYY-MM-DD"
         lastOverhaulRh:
           type: ["number", "null"]
-          description: "The component's own lifetime RH at its last overhaul"
+          description: "Main engine total RH at this component's last overhaul"
         children:
           type: array
           items:

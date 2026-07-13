@@ -153,7 +153,7 @@ export function ValveDashboardPanel({ valveType }: { valveType: ValveType }) {
                                 {(slot.lastOverhaulDate || slot.lastOverhaulRh != null) && (
                                   <div className="text-[10px] text-muted-foreground leading-tight">
                                     Last O/H: {slot.lastOverhaulDate ?? "—"}
-                                    {slot.lastOverhaulRh != null && ` at ${slot.lastOverhaulRh.toLocaleString()} hr`}
+                                    {slot.lastOverhaulRh != null && ` at ME ${slot.lastOverhaulRh.toLocaleString()} hr`}
                                   </div>
                                 )}
                                 <div className="mt-1.5 space-y-1">
@@ -193,7 +193,7 @@ export function ValveDashboardPanel({ valveType }: { valveType: ValveType }) {
                                           {(child.lastOverhaulDate || child.lastOverhaulRh != null) && (
                                             <div className="text-[9px] text-muted-foreground leading-tight mb-0.5 pl-4">
                                               Last O/H: {child.lastOverhaulDate ?? "—"}
-                                              {child.lastOverhaulRh != null && ` at ${child.lastOverhaulRh.toLocaleString()} hr`}
+                                              {child.lastOverhaulRh != null && ` at ME ${child.lastOverhaulRh.toLocaleString()} hr`}
                                             </div>
                                           )}
                                           <div className="h-1 w-full bg-muted rounded-full overflow-hidden">

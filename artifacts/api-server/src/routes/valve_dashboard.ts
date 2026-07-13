@@ -55,10 +55,11 @@ router.get("/vessels/:vesselId/valves/:valveType/dashboard", async (req, res): P
 
   // Children (nozzles, springs, etc.) have no slot of their own — they inherit
   // location/status/RH clock from their parent and are nested under it here.
-  // Once an overhaul is recorded on a component, its overhaul-due clock
-  // restarts from that point — totalRh shown is hours run since then.
+  // lastOverhaulRh is the MAIN ENGINE RH at the component's last overhaul —
+  // hours since overhaul = current ME RH minus that baseline (falls back to
+  // the component's lifetime hours when no overhaul has been recorded).
   function sinceOverhaul(liveRh: number, lastOverhaulRh: number | null) {
-    return Math.round(Math.max(0, liveRh - (lastOverhaulRh ?? 0)));
+    return Math.round(lastOverhaulRh != null ? Math.max(0, currentMeRh - lastOverhaulRh) : liveRh);
   }
 
   function childDto(child: typeof allComps[0]) {
