@@ -193,6 +193,11 @@ export type ComponentUpdateOverhaulRh = number | null;
 export type ComponentUpdateWarningRh = number | null;
 
 export interface ComponentUpdate {
+  /**
+   * Rename the component; cylinder-setup and movement-history references are updated to the new ID
+   * @minLength 1
+   */
+  componentId?: string;
   componentType?: string;
   condition?: string;
   currentStatus?: string;
@@ -470,6 +475,11 @@ export type ValveComponentUpdateLastOverhaulDate = string | null;
 export type ValveComponentUpdateLastOverhaulRh = number | null;
 
 export interface ValveComponentUpdate {
+  /**
+   * Rename the component; slot and movement-history references are updated to the new ID
+   * @minLength 1
+   */
+  componentId?: string;
   componentType?: string;
   condition?: string;
   currentStatus?: string;

@@ -1326,6 +1326,10 @@ components:
     ComponentUpdate:
       type: object
       properties:
+        componentId:
+          type: string
+          minLength: 1
+          description: "Rename the component; cylinder-setup and movement-history references are updated to the new ID"
         componentType:
           type: string
         condition:
@@ -1647,6 +1651,10 @@ components:
     ValveComponentUpdate:
       type: object
       properties:
+        componentId:
+          type: string
+          minLength: 1
+          description: "Rename the component; slot and movement-history references are updated to the new ID"
         componentType:
           type: string
         condition:

@@ -114,7 +114,8 @@ function ComponentForm({
         render={({ field }) => (
           <FormItem>
             <FormLabel>Component ID / Serial No</FormLabel>
-            <FormControl><Input {...field} disabled={!!editingId} /></FormControl>
+            <FormControl><Input {...field} /></FormControl>
+            {editingId && <FormDescription className="text-xs">Renaming updates cylinder assignments and movement history automatically.</FormDescription>}
             <FormMessage />
           </FormItem>
         )}

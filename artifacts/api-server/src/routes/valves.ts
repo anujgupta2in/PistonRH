@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { and, eq, desc } from "drizzle-orm";
-import { db, valveComponents, componentTypeThresholds, monthlyRhLog, vessels } from "@workspace/db";
+import { db, valveComponents, componentTypeThresholds, monthlyRhLog, vessels, valveCylinderSlots, valveMovementLog } from "@workspace/db";
 import { computeComponentLiveRh, getAlertStatus, resolveValveComponentState } from "../lib/calculations";
 
 type ValveComponentRow = typeof valveComponents.$inferSelect;
@@ -197,6 +197,20 @@ router.patch("/vessels/:vesselId/valves/:valveType/components/:componentId", asy
 
   const updates: Record<string, unknown> = {};
   const b = req.body;
+  // Rename: slot and movement-history references use the text ID, so they
+  // must be updated in step with the component itself.
+  const newId = typeof b.componentId === "string" && b.componentId.trim() !== "" ? b.componentId.trim() : null;
+  if (newId != null && newId !== componentId) {
+    const [dup] = await db
+      .select()
+      .from(valveComponents)
+      .where(and(eq(valveComponents.vesselId, vesselId), eq(valveComponents.valveType, valveType), eq(valveComponents.componentId, newId)));
+    if (dup) {
+      res.status(400).json({ error: `Component ID '${newId}' already exists for this vessel and valve type.` });
+      return;
+    }
+    updates.componentId = newId;
+  }
   if (b.componentType != null) updates.componentType = b.componentType;
   if (b.condition != null) updates.condition = b.condition;
   if (b.currentStatus != null) updates.currentStatus = b.currentStatus;
@@ -236,6 +250,17 @@ router.patch("/vessels/:vesselId/valves/:valveType/components/:componentId", asy
     .where(and(eq(valveComponents.vesselId, vesselId), eq(valveComponents.valveType, valveType), eq(valveComponents.componentId, componentId)))
     .returning();
   if (!comp) { res.status(404).json({ error: "Not found" }); return; }
+
+  if (updates.componentId) {
+    await db
+      .update(valveCylinderSlots)
+      .set({ fittedComponentId: newId, updatedAt: new Date() })
+      .where(and(eq(valveCylinderSlots.vesselId, vesselId), eq(valveCylinderSlots.valveType, valveType), eq(valveCylinderSlots.fittedComponentId, componentId)));
+    await db
+      .update(valveMovementLog)
+      .set({ componentId: newId! })
+      .where(and(eq(valveMovementLog.vesselId, vesselId), eq(valveMovementLog.valveType, valveType), eq(valveMovementLog.componentId, componentId)));
+  }
 
   const [currentMeRh, cfg, byId] = await Promise.all([getLatestMeRh(vesselId), getValveAlertCfg(vesselId, valveType), getVesselValveComponentsById(vesselId, valveType)]);
   res.json(toDto(comp, currentMeRh, cfg.overhaulRh, cfg.warningRh, cfg.typeThreshMap, byId));

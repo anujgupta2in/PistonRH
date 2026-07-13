@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { and, eq, desc } from "drizzle-orm";
-import { db, components, componentTypeThresholds, monthlyRhLog, vessels } from "@workspace/db";
+import { db, components, componentTypeThresholds, monthlyRhLog, vessels, cylinderSetup, movementLog } from "@workspace/db";
 import {
   ListComponentsParams,
   CreateComponentParams,
@@ -148,7 +148,24 @@ router.patch("/vessels/:vesselId/components/:componentId", async (req, res): Pro
     return;
   }
 
+  const vid = params.data.vesselId;
+  const oldId = params.data.componentId;
+  const newId = parsed.data.componentId;
+
   const updates: Record<string, unknown> = {};
+  // Rename: cylinder-setup and movement-history references use the text ID,
+  // so they must be updated in step with the component itself.
+  if (newId != null && newId !== oldId) {
+    const [dup] = await db
+      .select()
+      .from(components)
+      .where(and(eq(components.vesselId, vid), eq(components.componentId, newId)));
+    if (dup) {
+      res.status(400).json({ error: `Component ID '${newId}' already exists for this vessel.` });
+      return;
+    }
+    updates.componentId = newId;
+  }
   if (parsed.data.componentType != null) updates.componentType = parsed.data.componentType;
   if (parsed.data.condition != null) updates.condition = parsed.data.condition;
   if (parsed.data.currentStatus != null) updates.currentStatus = parsed.data.currentStatus;
@@ -173,6 +190,17 @@ router.patch("/vessels/:vesselId/components/:componentId", async (req, res): Pro
   if (!comp) {
     res.status(404).json({ error: "Component not found" });
     return;
+  }
+
+  if (updates.componentId) {
+    await db
+      .update(cylinderSetup)
+      .set({ fittedComponentId: newId, updatedAt: new Date() })
+      .where(and(eq(cylinderSetup.vesselId, vid), eq(cylinderSetup.fittedComponentId, oldId)));
+    await db
+      .update(movementLog)
+      .set({ componentId: newId! })
+      .where(and(eq(movementLog.vesselId, vid), eq(movementLog.componentId, oldId)));
   }
 
   const [currentMeRh, cfg] = await Promise.all([

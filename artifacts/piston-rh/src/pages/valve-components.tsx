@@ -49,7 +49,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const editSchema = formSchema.omit({ componentId: true });
+const editSchema = formSchema;
 type EditValues = z.infer<typeof editSchema>;
 
 export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
@@ -79,7 +79,7 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
 
   const editForm = useForm<EditValues>({
     resolver: zodResolver(editSchema),
-    defaultValues: { componentType: "", condition: "New", currentStatus: "Onboard Spare", currentLocation: "", totalAccumulatedRh: 0, overhaulRh: null, warningRh: null, parentComponentId: null, lastOverhaulDate: "", lastOverhaulRh: null, remarks: "" },
+    defaultValues: { componentId: "", componentType: "", condition: "New", currentStatus: "Onboard Spare", currentLocation: "", totalAccumulatedRh: 0, overhaulRh: null, warningRh: null, parentComponentId: null, lastOverhaulDate: "", lastOverhaulRh: null, remarks: "" },
   });
 
   // A top-level Fuel/Exhaust Valve's own threshold is its "Overhaul Interval";
@@ -102,7 +102,7 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
   const onEdit = (data: EditValues) => {
     if (!editingComp) return;
     updateComp.mutate(
-      { vesselId: activeVesselId!, valveType, componentId: editingComp.componentId, data: { componentType: data.componentType, condition: data.condition, currentStatus: data.currentStatus, currentLocation: data.currentLocation, totalAccumulatedRh: data.totalAccumulatedRh, overhaulRh: data.overhaulRh ?? undefined, warningRh: data.warningRh ?? undefined, parentComponentId: data.parentComponentId ?? null, lastOverhaulDate: data.lastOverhaulDate || null, lastOverhaulRh: data.lastOverhaulRh ?? null, remarks: data.remarks } },
+      { vesselId: activeVesselId!, valveType, componentId: editingComp.componentId, data: { componentId: data.componentId, componentType: data.componentType, condition: data.condition, currentStatus: data.currentStatus, currentLocation: data.currentLocation, totalAccumulatedRh: data.totalAccumulatedRh, overhaulRh: data.overhaulRh ?? undefined, warningRh: data.warningRh ?? undefined, parentComponentId: data.parentComponentId ?? null, lastOverhaulDate: data.lastOverhaulDate || null, lastOverhaulRh: data.lastOverhaulRh ?? null, remarks: data.remarks } },
       {
         onSuccess: () => { toast({ title: "Component updated" }); invalidate(); setEditingComp(null); },
         onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
@@ -122,7 +122,7 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
   };
 
   const openEdit = (comp: NonNullable<typeof comps>[number]) => {
-    editForm.reset({ componentType: comp.componentType, condition: comp.condition, currentStatus: comp.currentStatus, currentLocation: comp.currentLocation, totalAccumulatedRh: comp.totalAccumulatedRh, overhaulRh: comp.overhaulRh ?? null, warningRh: comp.warningRh ?? null, parentComponentId: comp.parentComponentId ?? null, lastOverhaulDate: comp.lastOverhaulDate ?? "", lastOverhaulRh: comp.lastOverhaulRh ?? null, remarks: comp.remarks ?? "" });
+    editForm.reset({ componentId: comp.componentId, componentType: comp.componentType, condition: comp.condition, currentStatus: comp.currentStatus, currentLocation: comp.currentLocation, totalAccumulatedRh: comp.totalAccumulatedRh, overhaulRh: comp.overhaulRh ?? null, warningRh: comp.warningRh ?? null, parentComponentId: comp.parentComponentId ?? null, lastOverhaulDate: comp.lastOverhaulDate ?? "", lastOverhaulRh: comp.lastOverhaulRh ?? null, remarks: comp.remarks ?? "" });
     setEditingComp({ componentId: comp.componentId });
   };
 
@@ -270,6 +270,13 @@ export function ValveComponentsPanel({ valveType }: { valveType: ValveType }) {
           </DialogHeader>
           <Form {...editForm}>
             <form onSubmit={editForm.handleSubmit(onEdit)} className="space-y-4">
+              <FormField control={editForm.control} name="componentId" render={({ field }) => (
+                <FormItem><FormLabel>Component ID</FormLabel>
+                  <FormControl><Input {...field} /></FormControl>
+                  <FormDescription className="text-xs">Renaming updates slot assignments and movement history automatically.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )} />
               <FormField control={editForm.control} name="componentType" render={({ field }) => (
                 <FormItem><FormLabel>Component Type</FormLabel>
                   <FormControl><Input list={`valve-edit-type-list-${valveType}`} {...field} /></FormControl>

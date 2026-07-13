@@ -324,7 +324,11 @@ export const updateComponentParams = zod.object({
   "componentId": zod.coerce.string()
 })
 
+
+
+
 export const updateComponentBody = zod.object({
+  "componentId": zod.string().min(1).optional().describe('Rename the component; cylinder-setup and movement-history references are updated to the new ID'),
   "componentType": zod.string().optional(),
   "condition": zod.string().optional(),
   "currentStatus": zod.string().optional(),
@@ -690,7 +694,11 @@ export const updateValveComponentParams = zod.object({
   "componentId": zod.coerce.string()
 })
 
+
+
+
 export const updateValveComponentBody = zod.object({
+  "componentId": zod.string().min(1).optional().describe('Rename the component; slot and movement-history references are updated to the new ID'),
   "componentType": zod.string().optional(),
   "condition": zod.string().optional(),
   "currentStatus": zod.string().optional(),
