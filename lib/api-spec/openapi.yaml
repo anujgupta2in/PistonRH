@@ -1502,6 +1502,9 @@ components:
       properties:
         currentMeRh:
           type: number
+        currentMeRhDate:
+          type: ["string", "null"]
+          description: "Date (YYYY-MM-DD) of the monthly reading the current ME RH comes from"
         cylinderStatus:
           type: array
           items:
@@ -1764,6 +1767,9 @@ components:
       properties:
         currentMeRh:
           type: number
+        currentMeRhDate:
+          type: ["string", "null"]
+          description: "Date (YYYY-MM-DD) of the monthly reading the current ME RH comes from"
         valveType:
           type: string
         crownOverhaulRh:

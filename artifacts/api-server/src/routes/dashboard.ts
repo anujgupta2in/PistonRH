@@ -194,6 +194,7 @@ router.get("/vessels/:vesselId/dashboard", async (req, res): Promise<void> => {
 
   res.json({
     currentMeRh,
+    currentMeRhDate: latestRh?.logDate ?? null,
     cylinderStatus,
     spareComponents,
     ashoreComponents,

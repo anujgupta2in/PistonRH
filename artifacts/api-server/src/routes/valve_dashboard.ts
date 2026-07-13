@@ -215,6 +215,7 @@ router.get("/vessels/:vesselId/valves/:valveType/dashboard", async (req, res): P
 
   res.json({
     currentMeRh,
+    currentMeRhDate: latestRh?.logDate ?? null,
     valveType,
     cylinderStatus,
     spareComponents,

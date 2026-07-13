@@ -24,7 +24,7 @@ function PistonDashboardPanel() {
     );
   }
 
-  const { currentMeRh, cylinderStatus, alerts, spareComponents, ashoreComponents, alertConfig } = dashboard;
+  const { currentMeRh, currentMeRhDate, cylinderStatus, alerts, spareComponents, ashoreComponents, alertConfig } = dashboard;
 
   return (
     <div className="space-y-6">
@@ -37,6 +37,9 @@ function PistonDashboardPanel() {
               {currentMeRh.toLocaleString()}{" "}
               <span className="text-sm font-normal text-muted-foreground">hrs</span>
             </div>
+            {currentMeRhDate && (
+              <div className="text-[10px] text-muted-foreground">as of {currentMeRhDate}</div>
+            )}
           </div>
         </div>
       </div>

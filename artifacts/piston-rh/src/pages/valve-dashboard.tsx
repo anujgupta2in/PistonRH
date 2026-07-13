@@ -34,7 +34,7 @@ export function ValveDashboardPanel({ valveType }: { valveType: ValveType }) {
     );
   }
 
-  const { currentMeRh, cylinderStatus, alerts, spareComponents, ashoreComponents, alertConfig, crownOverhaulRh } = dashboard;
+  const { currentMeRh, currentMeRhDate, cylinderStatus, alerts, spareComponents, ashoreComponents, alertConfig, crownOverhaulRh } = dashboard;
   const label = valveType === "fuel" ? "Fuel Valve" : "Exhaust Valve";
   const Icon = valveType === "fuel" ? Flame : Wind;
 
@@ -50,6 +50,9 @@ export function ValveDashboardPanel({ valveType }: { valveType: ValveType }) {
               {currentMeRh.toLocaleString()}
               <span className="text-sm font-normal text-muted-foreground ml-1">hrs</span>
             </div>
+            {currentMeRhDate && (
+              <div className="text-[10px] text-muted-foreground">as of {currentMeRhDate}</div>
+            )}
           </div>
         </div>
       </div>

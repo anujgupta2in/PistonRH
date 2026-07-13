@@ -482,6 +482,7 @@ export const getDashboardParams = zod.object({
 
 export const getDashboardResponse = zod.object({
   "currentMeRh": zod.number(),
+  "currentMeRhDate": zod.string().nullish().describe('Date (YYYY-MM-DD) of the monthly reading the current ME RH comes from'),
   "cylinderStatus": zod.array(zod.object({
   "cylinder": zod.number(),
   "components": zod.array(zod.object({
@@ -769,6 +770,7 @@ export const getValveDashboardParams = zod.object({
 
 export const getValveDashboardResponse = zod.object({
   "currentMeRh": zod.number(),
+  "currentMeRhDate": zod.string().nullish().describe('Date (YYYY-MM-DD) of the monthly reading the current ME RH comes from'),
   "valveType": zod.string(),
   "crownOverhaulRh": zod.number().describe('Vessel-wide Unit (cylinder) overhaul interval — same value used on the piston dashboard'),
   "crownWarningRh": zod.number(),

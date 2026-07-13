@@ -315,6 +315,11 @@ export interface AlertItem {
   isChild?: boolean;
 }
 
+/**
+ * Date (YYYY-MM-DD) of the monthly reading the current ME RH comes from
+ */
+export type DashboardDataCurrentMeRhDate = string | null;
+
 export type DashboardDataAlertConfig = {
   crownOverhaulRh: number;
   crownWarningRh: number;
@@ -323,6 +328,8 @@ export type DashboardDataAlertConfig = {
 
 export interface DashboardData {
   currentMeRh: number;
+  /** Date (YYYY-MM-DD) of the monthly reading the current ME RH comes from */
+  currentMeRhDate?: DashboardDataCurrentMeRhDate;
   cylinderStatus: CylinderStatus[];
   spareComponents: Component[];
   ashoreComponents: Component[];
@@ -561,6 +568,11 @@ export interface ValveCylinderStatus {
   rhSinceOverhaul: number;
 }
 
+/**
+ * Date (YYYY-MM-DD) of the monthly reading the current ME RH comes from
+ */
+export type ValveDashboardDataCurrentMeRhDate = string | null;
+
 export type ValveDashboardDataAlertConfig = {
   overhaulRh: number;
   warningRh: number;
@@ -568,6 +580,8 @@ export type ValveDashboardDataAlertConfig = {
 
 export interface ValveDashboardData {
   currentMeRh: number;
+  /** Date (YYYY-MM-DD) of the monthly reading the current ME RH comes from */
+  currentMeRhDate?: ValveDashboardDataCurrentMeRhDate;
   valveType: string;
   /** Vessel-wide Unit (cylinder) overhaul interval — same value used on the piston dashboard */
   crownOverhaulRh: number;
