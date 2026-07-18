@@ -1,7 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
 import * as XLSX from "xlsx";
-import { db, vessels, components, valveComponents, valveCylinderSlots, monthlyRhLog, cylinderSetup } from "@workspace/db";
+import { db, vessels, components, valveComponents, valveCylinderSlots, monthlyRhLog, cylinderSetup, componentTypeThresholds } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 
 const router = Router();
@@ -61,6 +61,9 @@ interface ParsedComponent {
   // cylinder the piston is fitted in. "Last Overhaul Date" column (valve
   // sheets) — applies to the valve component itself. Both YYYY-MM-DD or "".
   lastDecarbDate: string;
+  // "Last Decarb ME RH" (Piston sheet): ME total RH at the unit's last decarb,
+  // stored as the cylinder's overhaul baseline alongside the decarb date.
+  lastDecarbMeRh: number | null;
   lastOverhaulDate: string;
   // "Last Overhaul RH" (valve sheets): the component's own RH at its last
   // overhaul — the overhaul-due clock counts from here. null = not recorded.
@@ -89,6 +92,7 @@ function parseComponentSheet(wb: XLSX.WorkBook, sheetName: string): ParsedCompon
   const remCol     = colIdx("remarks");
   const parentCol  = colIdx("parent component id");
   const decarbCol  = colIdx("last decarb date");
+  const decarbRhCol = colIdx("last decarb me rh");
   const lastOhCol  = colIdx("last overhaul date");
   const lastOhRhCol = colIdx("last overhaul rh");
 
@@ -112,11 +116,63 @@ function parseComponentSheet(wb: XLSX.WorkBook, sheetName: string): ParsedCompon
       remarks:           strVal(row[remCol]),
       parentComponentId: parentCol >= 0 ? strVal(row[parentCol]) : "",
       lastDecarbDate:    decarbCol >= 0 ? dateVal(row[decarbCol]) : "",
+      lastDecarbMeRh:    decarbRhCol >= 0 && strVal(row[decarbRhCol]) !== "" ? numVal(row[decarbRhCol]) : null,
       lastOverhaulDate:  lastOhCol >= 0 ? dateVal(row[lastOhCol]) : "",
       lastOverhaulRh:    lastOhRhCol >= 0 && strVal(row[lastOhRhCol]) !== "" ? numVal(row[lastOhRhCol]) : null,
     });
   }
   return results;
+}
+
+// Optional "Cylinder Units" sheet: Unit | Last Decarb Date | Last Decarb ME RH | Last Dismantling ME RH.
+// The authoritative carrier for unit baselines — works even for units with no
+// piston currently fitted (the piston-row columns only cover fitted units).
+function parseCylinderUnits(wb: XLSX.WorkBook) {
+  const sheet = wb.Sheets["Cylinder Units"];
+  if (!sheet) return [];
+  const rawRows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, defval: "" });
+  if (rawRows.length < 2) return [];
+  const headers = (rawRows[0] as unknown[]).map(h => strVal(h).split("\n")[0].replace(/\*/g, "").trim().toLowerCase());
+  const unitCol   = headers.findIndex(h => h.includes("unit") || h.includes("cylinder"));
+  const dateCol   = headers.findIndex(h => h.includes("decarb date"));
+  const decarbCol = headers.findIndex(h => h.includes("decarb me rh"));
+  const disCol    = headers.findIndex(h => h.includes("dismantling"));
+  const out: { cylinderNumber: number; lastDecarbDate: string; lastDecarbMeRh: number | null; lastDismantlingMeRh: number | null }[] = [];
+  for (let i = 1; i < rawRows.length; i++) {
+    const row = rawRows[i] as unknown[];
+    const cylinderNumber = parseInt(strVal(row[unitCol]).replace(/[^0-9]/g, ""));
+    if (isNaN(cylinderNumber) || cylinderNumber < 1) continue;
+    out.push({
+      cylinderNumber,
+      lastDecarbDate: dateCol >= 0 ? dateVal(row[dateCol]) : "",
+      lastDecarbMeRh: decarbCol >= 0 && strVal(row[decarbCol]) !== "" ? numVal(row[decarbCol]) : null,
+      lastDismantlingMeRh: disCol >= 0 && strVal(row[disCol]) !== "" ? numVal(row[disCol]) : null,
+    });
+  }
+  return out;
+}
+
+// Optional "Type Thresholds" sheet: Category | Component Type | Interval | Warning
+function parseTypeThresholds(wb: XLSX.WorkBook) {
+  const sheet = wb.Sheets["Type Thresholds"];
+  if (!sheet) return [];
+  const rawRows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, defval: "" });
+  if (rawRows.length < 2) return [];
+  const headers = (rawRows[0] as unknown[]).map(h => strVal(h).split("\n")[0].replace(/\*/g, "").trim().toLowerCase());
+  const catCol  = headers.findIndex(h => h.includes("category"));
+  const typeCol = headers.findIndex(h => h.includes("component type"));
+  const ohCol   = headers.findIndex(h => h.includes("interval") || h.includes("overhaul"));
+  const warnCol = headers.findIndex(h => h.includes("warning"));
+  const out: { category: string; componentType: string; overhaulRh: number; warningRh: number }[] = [];
+  for (let i = 1; i < rawRows.length; i++) {
+    const row = rawRows[i] as unknown[];
+    const componentType = strVal(row[typeCol]);
+    const overhaulRh = numVal(row[ohCol]);
+    if (!componentType || overhaulRh <= 0) continue;
+    const warningRh = numVal(row[warnCol]) || overhaulRh;
+    out.push({ category: strVal(row[catCol]) || "piston", componentType, overhaulRh, warningRh });
+  }
+  return out;
 }
 
 // Parse "Cyl N Slot M" → { cyl, slot } | null
@@ -286,6 +342,37 @@ router.post(
         }
       }
 
+      // ── 2a. Upsert per-unit baselines from optional Cylinder Units sheet ──
+      for (const u of parseCylinderUnits(wb)) {
+        const set: Record<string, unknown> = { updatedAt: new Date() };
+        if (u.lastDecarbDate) set.lastDecarbDate = u.lastDecarbDate;
+        if (u.lastDecarbMeRh != null) set.lastOverhaulRh = u.lastDecarbMeRh;
+        if (u.lastDismantlingMeRh != null) set.lastDismantlingRh = u.lastDismantlingMeRh;
+        if (Object.keys(set).length === 1) continue;
+        await db.insert(cylinderSetup)
+          .values({
+            vesselId,
+            cylinderNumber: u.cylinderNumber,
+            lastDecarbDate: u.lastDecarbDate || null,
+            lastOverhaulRh: u.lastDecarbMeRh ?? 0,
+            lastDismantlingRh: u.lastDismantlingMeRh ?? 0,
+          })
+          .onConflictDoUpdate({
+            target: [cylinderSetup.vesselId, cylinderSetup.cylinderNumber],
+            set,
+          });
+      }
+
+      // ── 2b. Upsert component-type thresholds from optional sheet ─────────
+      for (const t of parseTypeThresholds(wb)) {
+        await db.insert(componentTypeThresholds)
+          .values({ vesselId, category: t.category, componentType: t.componentType, overhaulRh: t.overhaulRh, warningRh: t.warningRh })
+          .onConflictDoUpdate({
+            target: [componentTypeThresholds.vesselId, componentTypeThresholds.componentType],
+            set: { category: t.category, overhaulRh: t.overhaulRh, warningRh: t.warningRh },
+          });
+      }
+
       // ── 3. Import piston components ───────────────────────────────────────
       for (const p of pistons) {
         const [existing] = await db.select().from(components)
@@ -317,17 +404,27 @@ router.post(
           results.pistonCreated++;
         }
 
-        // "Last Decarb Date" on an in-service piston row applies to the Unit
-        // (cylinder) it is fitted in, not the piston component itself.
+        // "Last Decarb Date" / "Last Decarb ME RH" on an in-service piston row
+        // apply to the Unit (cylinder) it is fitted in, not the piston itself:
+        // the date is informational; the ME RH is the unit's overhaul baseline
+        // that drives "RH after overhaul" on the dashboard.
         const applied = !existing || overwritePistons.has(p.componentId);
-        if (applied && p.lastDecarbDate && p.currentStatus === "In Service") {
+        if (applied && (p.lastDecarbDate || p.lastDecarbMeRh != null) && p.currentStatus === "In Service") {
           const parsed = parseCylSlot(p.fittedInCylinder);
           if (parsed) {
+            const cylUpdates: Record<string, unknown> = { updatedAt: new Date() };
+            if (p.lastDecarbDate) cylUpdates.lastDecarbDate = p.lastDecarbDate;
+            if (p.lastDecarbMeRh != null) cylUpdates.lastOverhaulRh = p.lastDecarbMeRh;
             await db.insert(cylinderSetup)
-              .values({ vesselId, cylinderNumber: parsed.cyl, lastDecarbDate: p.lastDecarbDate })
+              .values({
+                vesselId,
+                cylinderNumber: parsed.cyl,
+                lastDecarbDate: p.lastDecarbDate || null,
+                lastOverhaulRh: p.lastDecarbMeRh ?? 0,
+              })
               .onConflictDoUpdate({
                 target: [cylinderSetup.vesselId, cylinderSetup.cylinderNumber],
-                set: { lastDecarbDate: p.lastDecarbDate, updatedAt: new Date() },
+                set: cylUpdates,
               });
           }
         }
